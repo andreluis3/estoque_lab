@@ -1,6 +1,9 @@
 import sqlite3
+import os
+
 
 def conectar():
+    os.makedirs("database", exist_ok=True)  # 👈 garante pasta
     return sqlite3.connect("database/estoque.db")
 
 def criar_tabela():

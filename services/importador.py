@@ -2,7 +2,7 @@ import pandas as pd
 
 COLUNAS_PLANILHA = {
     "Tipo": "categoria",
-    "Nome Equipamento": "item",
+    "Nome Item": "item",
     "Modelo": "modelo",
     "Quantidade": "quantidade",
     "Caixa": "local_caixa",
@@ -12,6 +12,11 @@ COLUNAS_PLANILHA = {
 
 def importar_excel(caminho: str) -> list[dict]:
     df = pd.read_excel(caminho)
+    print("PRIMEIRA LINHA DO DF:")
+    print(df.iloc[0])
+    print("COLUNAS BRUTAS DO EXCEL:")
+    print(list(df.columns))  
+    df.columns = df.columns.str.strip()
 
     # Renomeia colunas
     df = df.rename(columns=COLUNAS_PLANILHA)
@@ -39,6 +44,8 @@ def importar_excel(caminho: str) -> list[dict]:
     ]
 
     df = df[ordem]
+    print("COLUNAS RENOMEADAS DO EXCEL:")
+    print(list(df.columns))
 
     return df.to_dict(orient="records")
 
@@ -51,3 +58,4 @@ def importar_para_banco(caminho):
         inserir_item(item)
 
     print("Importação concluída!")
+    

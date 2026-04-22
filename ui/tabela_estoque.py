@@ -1,7 +1,5 @@
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import QTableView
-from PyQt6.QtGui import QStandardItemModel, QStandardItem, QColor
-
-from themes import cor_por_categoria, status_por_quantidade
 
 
 class TabelaEstoque(QTableView):
@@ -11,39 +9,25 @@ class TabelaEstoque(QTableView):
         self.model = QStandardItemModel()
         self.setModel(self.model)
 
-        self.configurar_tabela()
-
-    def configurar_tabela(self):
-        headers = ["Tipo", "Item", "Modelo", "Qtd", "Caixa", "Slot", "Status"]
-        self.model.setHorizontalHeaderLabels(headers)
+        self.model.setHorizontalHeaderLabels([
+            "Tipo", "Item", "Modelo", "Qtd", "Caixa", "Slot"
+        ])
 
     def carregar_dados(self, itens):
-        self.model.removeRows(0, self.model.rowCount())
+        print("CARREGANDO NA TABELA:", len(itens))  # DEBUG
+
+        self.model.setRowCount(0)  # limpa
 
         for item in itens:
-            tipo = item["categoria"]
-            qtd = item["quantidade"]
-
-            cor = cor_por_categoria(tipo)
-            status, cor_status = status_por_quantidade(qtd)
-
             linha = [
-                QStandardItem(tipo),
-                QStandardItem(item["item"]),
-                QStandardItem(item["modelo"]),
-                QStandardItem(str(qtd)),
-                QStandardItem(item["local_caixa"]),
-                QStandardItem(item["local_slot"]),
-                QStandardItem(status)
+                QStandardItem(str(item["categoria"])),
+                QStandardItem(str(item["item"])),
+                QStandardItem(str(item["modelo"])),
+                QStandardItem(str(item["quantidade"])),
+                QStandardItem(str(item["local_caixa"])),
+                QStandardItem(str(item["local_slot"])),
             ]
 
-            # 🎨 cor por tipo
-            for col in linha:
-                col.setBackground(QColor(cor))
-
-            # ⚠️ prioridade: status
-            if status != "OK":
-                for col in linha:
-                    col.setBackground(QColor(cor_status))
-
             self.model.appendRow(linha)
+
+        self.resizeColumnsToContents()
