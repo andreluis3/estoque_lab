@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QTableView
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QColor
 
-from theme import cor_por_categoria, status_por_quantidade
+from themes import cor_por_categoria, status_por_quantidade
 
 
 class TabelaEstoque(QTableView):

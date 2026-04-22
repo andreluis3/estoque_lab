@@ -54,6 +54,16 @@ CORES_CAIXA = {
     "Caixa LoRa": "#99e9f2",
 }
 
+def status_por_quantidade(qtd):
+    if qtd == 0:
+        return "ZERADO", "#ff6b6b"
+    elif qtd <= 3:
+        return "CRÍTICO", "#fa5252"
+    elif qtd <= 10:
+        return "BAIXO", "#fab005"
+    else:
+        return "OK", "#51cf66"
+
 def cor_por_categoria(tipo: str) -> str:
     tipo = tipo.strip()
 

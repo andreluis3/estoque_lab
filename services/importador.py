@@ -41,3 +41,13 @@ def importar_excel(caminho: str) -> list[dict]:
     df = df[ordem]
 
     return df.to_dict(orient="records")
+
+from repositories.item_repository import inserir_item
+
+def importar_para_banco(caminho):
+    dados = importar_excel(caminho)
+
+    for item in dados:
+        inserir_item(item)
+
+    print("Importação concluída!")
