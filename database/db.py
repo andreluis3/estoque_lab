@@ -20,6 +20,20 @@ def criar_tabela():
         status TEXT
     )
     """)
+    
+    # database/db.py
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS movimentacoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data TEXT,
+            usuario TEXT,
+            acao TEXT,          -- 'entrada' ou 'saida'
+            item_id INTEGER,
+            quantidade INTEGER,
+            detalhes TEXT,
+            FOREIGN KEY (item_id) REFERENCES itens(id)
+        )
+    """)
 
     conn.commit()
     conn.close() 
