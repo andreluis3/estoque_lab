@@ -5,6 +5,7 @@ from PyQt6.QtCore import Qt, QTimer
 
 from ui.tabela_estoque import TabelaEstoque
 from controllers.crud import Crud
+from PyQt6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QLabel
 
 
 class MainWindow(QMainWindow):
@@ -16,6 +17,10 @@ class MainWindow(QMainWindow):
 
         # 🔥 backend
         self.service = Crud()
+        self.input_busca = QLineEdit()
+        #buscar dados na tabela
+        self.input_busca.setPlaceholderText("🔍 Buscar item...")
+        layout.addWidget(self.input_busca)
 
         container = QWidget()
         layout = QVBoxLayout()

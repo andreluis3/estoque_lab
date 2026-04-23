@@ -7,7 +7,7 @@ class Crud:
        
     
     
-    def inserir_item(self, dados, usuario):
+    def inserir_item(self, dados, usuario="sistema"):
         try:
             # 1. validar
             self.validar_dados_item(dados)
@@ -68,6 +68,36 @@ class Crud:
                 "status": "erro",
                 "mensagem": str(e)
             }
+
+    def registrar_movimentacao(self, item_id, tipo, quantidade, usuario):
+        try:
+            self.cursor.execute("""
+                INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
+                VALUES (?, ?, ?, ?)
+            """, (item_id, tipo, quantidade, usuario))
+
+        except Exception as e:
+            print("Erro ao registrar movimentação:", e)
+            
+    def listar_itens(self):
+        resultado = self.cursor.execute("""
+            SELECT id, nome, tipo, modelo, quantidade, caixa, localizacao
+            FROM itens
+        """).fetchall()
+
+        itens = []
+        for row in resultado:
+            itens.append({
+                "id": row[0],
+                "nome": row[1],
+                "tipo": row[2],
+                "modelo": row[3],
+                "quantidade": row[4],
+                "caixa": row[5],
+                "localizacao": row[6]
+            })
+
+        return itens
 
     def validar_dados_item(self, dados):
         campos_obrigatorios = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
