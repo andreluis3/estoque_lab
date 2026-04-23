@@ -15,8 +15,8 @@ def main():
 
     criar_tabela()  # 🔥 SEMPRE PRIMEIRO
 
-    # ⚠️ DESCOMENTA SÓ UMA VEZ
-    importar_para_banco("planilhas/estoque_lab_completa.xlsx")
+
+    #importar_para_banco("planilhas/estoque_lab_completa.xlsx")
 
     crud = Crud()
     itens = crud.listar_itens()

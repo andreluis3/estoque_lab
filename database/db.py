@@ -19,7 +19,8 @@ def criar_tabela():
         modelo TEXT NOT NULL,
         quantidade INTEGER NOT NULL,
         caixa TEXT NOT NULL,
-        localizacao TEXT NOT NULL
+        localizacao TEXT NOT NULL,
+        slot TEXT
     )
     """)
 

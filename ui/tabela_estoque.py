@@ -7,7 +7,7 @@ class TabelaEstoque(QTableWidget):
     def __init__(self):
         super().__init__()
 
-        self.colunas = ["ID", "Nome", "Tipo", "Modelo", "Quantidade", "Caixa", "Localização"]
+        self.colunas = ["ID", "Nome", "Tipo", "Modelo", "Quantidade", "Caixa", "Localização", "Slot"]
 
         self.setColumnCount(len(self.colunas))
         self.setHorizontalHeaderLabels(self.colunas)
@@ -27,6 +27,7 @@ class TabelaEstoque(QTableWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents) # Quantidade
         header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents) # Caixa
         header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)          # Localização
+        header.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents) # Slot
         self.setAlternatingRowColors(True)
         
     def carregar_dados(self, itens):
@@ -43,7 +44,8 @@ class TabelaEstoque(QTableWidget):
                 item["modelo"],
                 item["quantidade"],
                 item["caixa"],
-                item["localizacao"]
+                item["localizacao"],
+                item["slot"]
             ]
 
             for col, valor in enumerate(valores):
@@ -62,7 +64,8 @@ class TabelaEstoque(QTableWidget):
             dados["modelo"],
             dados["quantidade"],
             dados["caixa"],
-            dados["localizacao"]
+            dados["localizacao"],
+            dados["slot"]
         ]
 
         for col, valor in enumerate(valores):

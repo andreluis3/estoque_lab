@@ -9,8 +9,8 @@ COLUNAS_PLANILHA = {
     "Modelo": "modelo",
     "Quantidade": "quantidade",
     "Caixa": "caixa",
-    "Localização": "localizacao"
-    # "Slot" ignorado por enquanto
+    "Localização": "localizacao",
+    "Slot": "slot"
 }
 
 
@@ -23,30 +23,41 @@ def importar_excel(caminho: str) -> list[dict]:
     print("COLUNAS BRUTAS DO EXCEL:")
     print(list(df.columns))
 
-    # limpar nomes
     df.columns = df.columns.str.strip()
 
-    # renomear
+    # 🔁 RENOMEAR
     df = df.rename(columns=COLUNAS_PLANILHA)
 
-    # garantir colunas obrigatórias
     for col in COLUNAS_PLANILHA.values():
         if col not in df.columns:
             df[col] = None
 
-    # 🔥 LIMPEZA E PADRONIZAÇÃO
+    # 🔥 LIMPEZA DOS DADOS
     df["nome"] = df["nome"].fillna("").astype(str).str.strip()
     df["tipo"] = df["tipo"].fillna("Outros").astype(str).str.strip()
     df["modelo"] = df["modelo"].fillna("").astype(str).str.strip()
-    df["quantidade"] = df["quantidade"].fillna(0).astype(int)
-    df["caixa"] = df["caixa"].fillna("").astype(str).str.strip()
-    df["localizacao"] = df["localizacao"].fillna("").astype(str).str.strip()
-    df["localizacao"] = df["localizacao"].fillna("sem localização na cx") #pega campos sem localização e preenche com "Não informado" 
-    #depois colocar alguma localizacao generica da caixa, tipo "Caixa 1 - Sem localização"
 
-    # ordem final
-    ordem = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
-    df = df[ordem]
+    df["quantidade"] = df["quantidade"].fillna(0).astype(int)
+
+    df["caixa"] = df["caixa"].fillna("").astype(str).str.strip()
+
+
+    df["localizacao"] = (
+        df["localizacao"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .replace("", "Não informado")
+    )
+
+    df["slot"] = (
+        df["slot"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+    
+    df["slot"] = df["slot"].replace("", "Não informado")
 
     print("COLUNAS RENOMEADAS:")
     print(list(df.columns))
@@ -54,7 +65,6 @@ def importar_excel(caminho: str) -> list[dict]:
     return df.to_dict(orient="records")
 
 
-# 🔥 AGORA USANDO SEU CRUD (CORRETO)
 def importar_para_banco(caminho):
     crud = Crud()
 

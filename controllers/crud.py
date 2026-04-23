@@ -32,15 +32,16 @@ class Crud:
 
             else:
                 self.cursor.execute("""
-                    INSERT INTO itens (nome, tipo, modelo, quantidade, caixa, localizacao)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO itens (nome, tipo, modelo, quantidade, caixa, localizacao, slot)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (
                     dados["nome"],
                     dados["tipo"],
                     dados["modelo"],
                     dados["quantidade"],
                     dados["caixa"],
-                    dados["localizacao"]
+                    dados["localizacao"],
+                    dados["slot"]
                 ))
 
                 item_id = self.cursor.lastrowid
@@ -70,19 +71,20 @@ class Crud:
             }
 
     def registrar_movimentacao(self, item_id, tipo, quantidade, usuario):
+        self.cursor.execute("""
+            INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
+            VALUES (?, ?, ?, ?)
+        """, (item_id, tipo, quantidade, usuario))
         try:
-            self.cursor.execute("""
-                INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
-                VALUES (?, ?, ?, ?)
-            """, (item_id, tipo, quantidade, usuario))
-
+            self.conn.commit()
         except Exception as e:
             print("Erro ao registrar movimentação:", e)
+
+
             
     def listar_itens(self):
         resultado = self.cursor.execute("""
-            SELECT id, nome, tipo, modelo, quantidade, caixa, localizacao
-            FROM itens
+            SELECT id, nome, tipo, modelo, quantidade, caixa, localizacao, slot FROM itens
         """).fetchall()
 
         itens = []
@@ -94,9 +96,9 @@ class Crud:
                 "modelo": row[3],
                 "quantidade": row[4],
                 "caixa": row[5],
-                "localizacao": row[6]
+                "localizacao": row[6],
+                "slot": row[7]
             })
-
         return itens
 
     def validar_dados_item(self, dados):
@@ -113,16 +115,16 @@ class Crud:
         if not isinstance(quantidade, int) or quantidade < 0:
                 raise ValueError("A quantidade deve ser um número inteiro não negativo.")
             
-        for campo in ["nome", "tipo", "modelo", "caixa", "localizacao"]:
+        for campo in ["nome", "tipo", "modelo", "caixa", "localizacao", "slot"]:
             if not isinstance(dados[campo], str):
                 raise ValueError(f"O campo '{campo}' deve ser uma string.")
             
-        for campo in ["nome", "tipo", "modelo", "caixa", "localizacao"]:
+        for campo in ["nome", "tipo", "modelo", "caixa", "localizacao", "slot"]:
             if len(dados[campo]) > 255:
                 raise ValueError(f"O campo '{campo}' não pode exceder 255 caracteres.")
             
         for campo in  [";", "--", "/*", "*/"]:
-            for valor in [dados["nome"], dados["tipo"], dados["modelo"], dados["caixa"], dados["localizacao"]]:
+            for valor in [dados["nome"], dados["tipo"], dados["modelo"], dados["caixa"], dados["localizacao"], dados["slot"]]:
                 if campo in valor:
                     raise ValueError(f"O campo '{valor}' contém caracteres proibidos: {campo}")    
             
@@ -140,7 +142,8 @@ class Crud:
             "modelo": dados.get("modelo", "").strip().upper(),
             "quantidade": int(dados.get("quantidade", 0)),
             "caixa": dados.get("caixa", "").strip(),
-            "localizacao": dados.get("localizacao", "").strip().title()
+            "localizacao": dados.get("localizacao", "Não informado").strip().title(),
+            "slot": dados.get("slot", "").strip().upper()
         }
 
     def controlar_duplicidade(self, nome, modelo, item_id=None):
@@ -164,7 +167,7 @@ class Crud:
         try:
             # verificar se item existe
             item_atual = self.cursor.execute("""
-                SELECT nome, tipo, modelo, quantidade, caixa, localizacao
+                SELECT nome, tipo, modelo, quantidade, caixa, localizacao, slot
                 FROM itens WHERE id = ?
             """, (item_id,)).fetchone()
 
@@ -178,7 +181,8 @@ class Crud:
                 "modelo": item_atual[2],
                 "quantidade": item_atual[3],
                 "caixa": item_atual[4],
-                "localizacao": item_atual[5]
+                "localizacao": item_atual[5],
+                "slot": item_atual[6]
             }
 
             # atualizar apenas campos enviados
@@ -208,7 +212,7 @@ class Crud:
             # atualizar banco
             self.cursor.execute("""
                 UPDATE itens
-                SET nome=?, tipo=?, modelo=?, quantidade=?, caixa=?, localizacao=?
+                SET nome=?, tipo=?, modelo=?, quantidade=?, caixa=?, localizacao=?, slot=?
                 WHERE id=?
             """, (
                 item_dict["nome"],
@@ -217,6 +221,7 @@ class Crud:
                 item_dict["quantidade"],
                 item_dict["caixa"],
                 item_dict["localizacao"],
+                item_dict["slot"],
                 item_id
             ))
 

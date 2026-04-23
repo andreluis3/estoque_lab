@@ -6,6 +6,8 @@ from PyQt6.QtCore import Qt, QTimer
 from ui.tabela_estoque import TabelaEstoque
 from controllers.crud import Crud
 from PyQt6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QLabel
+from ui.dialogo_inserir import DialogoInserir
+from PyQt6.QtWidgets import QPushButton
 
 
 class MainWindow(QMainWindow):
@@ -19,11 +21,11 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()  
 
         self.input_busca = QLineEdit()
-        self.service = Crud()
         self.input_busca.textChanged.connect(self.filtrar_tabela)
         self.input_busca.setPlaceholderText("🔍 Buscar item...")
 
         layout.addWidget(self.input_busca)
+        self.service = Crud()
 
         # tabela
         self.tabela = TabelaEstoque()
@@ -31,6 +33,9 @@ class MainWindow(QMainWindow):
 
         container.setLayout(layout)
         self.setCentralWidget(container)
+        self.botao_add = QPushButton("➕ Adicionar Equipamento")
+        self.botao_add.clicked.connect(self.abrir_dialogo)
+        layout.addWidget(self.botao_add)
 
     def on_item_changed(self, item): #funcao de clique
         try:
@@ -42,7 +47,7 @@ class MainWindow(QMainWindow):
             # ID na coluna 0
             item_id = int(self.tabela.item(row, 0).text())
 
-            colunas = ["id", "nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
+            colunas = ["id", "nome", "tipo", "modelo", "quantidade", "caixa", "localizacao", "slot"]
 
             campo = colunas[col]
             valor = item.text()
@@ -83,3 +88,25 @@ class MainWindow(QMainWindow):
                     break
 
             self.tabela.setRowHidden(row, not mostrar)
+            
+            
+    def recarregar_tabela(self):
+        itens = self.service.listar_itens()
+        self.tabela.carregar_dados(itens)
+    
+    def abrir_dialogo(self):
+        print("Botão clicado!")
+
+        dialogo = DialogoInserir()
+
+        if dialogo.exec():
+            print("Dialog confirmado")
+
+            dados = dialogo.get_dados()
+
+            resultado = self.service.inserir_item(dados, usuario="andre")
+
+            if resultado["status"] == "ok":
+                self.recarregar_tabela()
+            else:
+                print("Erro:", resultado["mensagem"])
