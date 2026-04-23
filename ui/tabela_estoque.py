@@ -1,33 +1,42 @@
-from PyQt6.QtGui import QStandardItemModel, QStandardItem
-from PyQt6.QtWidgets import QTableView
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt6.QtCore import Qt
 
 
-class TabelaEstoque(QTableView):
+class TabelaEstoque(QTableWidget):
     def __init__(self):
         super().__init__()
 
-        self.model = QStandardItemModel()
-        self.setModel(self.model)
+        self.colunas = ["ID", "Nome", "Tipo", "Modelo", "Quantidade", "Caixa", "Localização"]
 
-        self.model.setHorizontalHeaderLabels([
-            "Tipo", "Item", "Modelo", "Qtd", "Caixa", "Slot"
-        ])
+        self.setColumnCount(len(self.colunas))
+        self.setHorizontalHeaderLabels(self.colunas)
 
-    def carregar_dados(self, itens):
-        print("CARREGANDO NA TABELA:", len(itens))  # DEBUG
+        # 🔥 esconder ID (mas ele existe!)
+        self.setColumnHidden(0, True)
 
-        self.model.setRowCount(0)  # limpa
+        # estética
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setAlternatingRowColors(True)
 
-        for item in itens:
-            linha = [
-                QStandardItem(str(item["categoria"])),
-                QStandardItem(str(item["item"])),
-                QStandardItem(str(item["modelo"])),
-                QStandardItem(str(item["quantidade"])),
-                QStandardItem(str(item["local_caixa"])),
-                QStandardItem(str(item["local_slot"])),
-            ]
+    def adicionar_item(self, dados):
+        row = self.rowCount()
+        self.insertRow(row)
 
-            self.model.appendRow(linha)
+        valores = [
+            dados["id"],
+            dados["nome"],
+            dados["tipo"],
+            dados["modelo"],
+            dados["quantidade"],
+            dados["caixa"],
+            dados["localizacao"]
+        ]
 
-        self.resizeColumnsToContents()
+        for col, valor in enumerate(valores):
+            item = QTableWidgetItem(str(valor))
+
+            # 🔥 CENTRALIZAR TEXTO
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            self.setItem(row, col, item)
+            

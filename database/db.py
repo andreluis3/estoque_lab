@@ -1,28 +1,31 @@
 import sqlite3
 import os
 
+def conectar_db():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(BASE_DIR, "..", "database/estoque.db")
+    conn = sqlite3.connect(db_path)
+    return conn
 
-def conectar():
-    os.makedirs("database", exist_ok=True)  # 👈 garante pasta
-    return sqlite3.connect("database/estoque.db")
 
 def criar_tabela():
-    conn = conectar()
+    conn = conectar_db()
     cursor = conn.cursor()
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS itens (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        item TEXT,
-        modelo TEXT,
-        categoria TEXT,
-        quantidade INTEGER,
-        local_caixa TEXT,
-        local_slot TEXT,
-        descricao TEXT,
-        status TEXT
+        nome TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        modelo TEXT NOT NULL,
+        quantidade INTEGER NOT NULL,
+        caixa TEXT NOT NULL,
+        localizacao TEXT NOT NULL
     )
     """)
+
+    conn.commit()
+  
     
     # database/db.py
     cursor.execute("""

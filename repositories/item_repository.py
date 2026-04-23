@@ -1,8 +1,8 @@
-from database.db import conectar
+from database.db import conectar_db
 
 
 def inserir_item(item):
-    conn = conectar()
+    conn = conectar_db()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -25,7 +25,7 @@ def inserir_item(item):
     conn.close()
 
 def listar_itens():
-    conn = conectar()
+    conn = conectar_db()
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM itens")
