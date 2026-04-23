@@ -12,32 +12,27 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("LABSTOCK")
+        self.setWindowTitle("ARMAZENAMENTO DE COMPONENTES - LABORATÓRIO DE EMC")
         self.resize(1000, 600)
 
-        # 🔥 backend
-        self.service = Crud()
+        container = QWidget()
+        layout = QVBoxLayout()  
+
         self.input_busca = QLineEdit()
-        #buscar dados na tabela
+        self.service = Crud()
+        self.input_busca.textChanged.connect(self.filtrar_tabela)
         self.input_busca.setPlaceholderText("🔍 Buscar item...")
+
         layout.addWidget(self.input_busca)
 
-        container = QWidget()
-        layout = QVBoxLayout()
-
-        # 👇 tabela
+        # tabela
         self.tabela = TabelaEstoque()
-
-        # 🔥 configurar tabela
-        self.tabela.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked)
-        self.tabela.itemChanged.connect(self.on_item_changed)
-
         layout.addWidget(self.tabela)
 
         container.setLayout(layout)
         self.setCentralWidget(container)
 
-    def on_item_changed(self, item):
+    def on_item_changed(self, item): #funcao de clique
         try:
             self.tabela.blockSignals(True)
 
@@ -73,3 +68,18 @@ class MainWindow(QMainWindow):
 
         finally:
             self.tabela.blockSignals(False)
+            
+    def filtrar_tabela(self, texto):
+        texto = texto.lower()
+
+        for row in range(self.tabela.rowCount()):
+            mostrar = False
+
+            for col in range(self.tabela.columnCount()):
+                item = self.tabela.item(row, col)
+
+                if item and texto in item.text().lower():
+                    mostrar = True
+                    break
+
+            self.tabela.setRowHidden(row, not mostrar)

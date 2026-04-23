@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QHeaderView
 from PyQt6.QtCore import Qt
 
 
@@ -16,6 +17,16 @@ class TabelaEstoque(QTableWidget):
 
         # estética
         self.horizontalHeader().setStretchLastSection(True)
+        #ajustar colunas para tabela
+        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header = self.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)          # Nome
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents) # Tipo
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents) # Modelo
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents) # Quantidade
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents) # Caixa
+        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)          # Localização
         self.setAlternatingRowColors(True)
         
     def carregar_dados(self, itens):

@@ -41,6 +41,8 @@ def importar_excel(caminho: str) -> list[dict]:
     df["quantidade"] = df["quantidade"].fillna(0).astype(int)
     df["caixa"] = df["caixa"].fillna("").astype(str).str.strip()
     df["localizacao"] = df["localizacao"].fillna("").astype(str).str.strip()
+    df["localizacao"] = df["localizacao"].fillna("sem localização na cx") #pega campos sem localização e preenche com "Não informado" 
+    #depois colocar alguma localizacao generica da caixa, tipo "Caixa 1 - Sem localização"
 
     # ordem final
     ordem = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
