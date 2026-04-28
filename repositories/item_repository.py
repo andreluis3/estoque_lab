@@ -7,18 +7,17 @@ def inserir_item(item):
 
     cursor.execute("""
         INSERT INTO itens (
-            item, modelo, categoria, quantidade,
-            local_caixa, local_slot, descricao, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            nome, tipo, modelo, quantidade,
+            caixa, localizacao, slot
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (
-        item["item"],
+        item["nome"],
+        item["tipo"],
         item["modelo"],
-        item["categoria"],
         item["quantidade"],
-        item["local_caixa"],
-        item["local_slot"],
-        item.get("descricao", ""),
-        ""
+        item["caixa"],
+        item["localizacao"],
+        item["slot"],
     ))
 
     conn.commit()
@@ -48,3 +47,31 @@ def listar_itens():
         })
 
     return itens
+
+def atualizar_item(item_id, dados):
+    query = """
+        UPDATE itens
+        SET nome = ?,
+            tipo = ?,
+            modelo = ?,
+            quantidade = ?,
+            caixa = ?,
+            localizacao = ?,
+            slot = ?
+        WHERE id = ?
+    """
+    conn = conectar_db()
+    conn.execute(query, (
+        dados["nome"],
+        dados["tipo"],
+        dados["modelo"],
+        dados["quantidade"],
+        dados["caixa"],
+        dados["localizacao"],
+        dados["slot"],
+        item_id
+    ))
+
+    conn.commit()
+
+    return {"status": "ok"}

@@ -1,3 +1,5 @@
+
+
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QAbstractItemView
 )
@@ -8,7 +10,8 @@ from controllers.crud import Crud
 from PyQt6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QLabel
 from ui.dialogo_inserir import DialogoInserir
 from PyQt6.QtWidgets import QPushButton
-
+from services.importador import importar_para_banco
+from services.item_service import ItemService
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -17,26 +20,47 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("ARMAZENAMENTO DE COMPONENTES - LABORATÓRIO DE EMC")
         self.resize(1000, 600)
 
+        self.crud = Crud()
+        self.service = ItemService(self.crud)
+
         container = QWidget()
-        layout = QVBoxLayout()  
+        layout = QVBoxLayout()
 
+        # 🔍 BUSCA
         self.input_busca = QLineEdit()
-        self.input_busca.textChanged.connect(self.filtrar_tabela)
         self.input_busca.setPlaceholderText("🔍 Buscar item...")
-
+        self.input_busca.textChanged.connect(self.filtrar_tabela)
         layout.addWidget(self.input_busca)
-        self.service = Crud()
 
-        # tabela
+        # 📦 TABELA
         self.tabela = TabelaEstoque()
         layout.addWidget(self.tabela)
 
-        container.setLayout(layout)
-        self.setCentralWidget(container)
+        # ➕ BOTÃO ADD
         self.botao_add = QPushButton("➕ Adicionar Equipamento")
         self.botao_add.clicked.connect(self.abrir_dialogo)
         layout.addWidget(self.botao_add)
 
+        # 🔄 RELOAD
+        self.btn_recarregar = QPushButton("🔄 Recarregar Planilha")
+        self.btn_recarregar.clicked.connect(self.recarregar_dados)
+        layout.addWidget(self.btn_recarregar)
+
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
+        self.carregar_tabela()
+        
+    def recarregar_dados(self):
+        caminho = "planilhas/estoque_lab_completa.xlsx"
+
+        importar_para_banco(caminho)
+
+        crud = Crud()
+        itens = crud.listar_itens()
+
+        self.tabela.carregar_dados(itens) 
+        
     def on_item_changed(self, item): #funcao de clique
         try:
             self.tabela.blockSignals(True)
@@ -75,19 +99,17 @@ class MainWindow(QMainWindow):
             self.tabela.blockSignals(False)
             
     def filtrar_tabela(self, texto):
-        texto = texto.lower()
-
         for row in range(self.tabela.rowCount()):
-            mostrar = False
+            match = False
 
             for col in range(self.tabela.columnCount()):
                 item = self.tabela.item(row, col)
 
-                if item and texto in item.text().lower():
-                    mostrar = True
+                if item and texto.lower() in item.text().lower():
+                    match = True
                     break
-
-            self.tabela.setRowHidden(row, not mostrar)
+                    
+            self.tabela.setRowHidden(row, not match)
             
             
     def recarregar_tabela(self):
@@ -97,16 +119,27 @@ class MainWindow(QMainWindow):
     def abrir_dialogo(self):
         print("Botão clicado!")
 
-        dialogo = DialogoInserir()
+        dialogo = DialogoInserir(self.service)
 
         if dialogo.exec():
-            print("Dialog confirmado")
+            self.carregar_tabela()
 
             dados = dialogo.get_dados()
 
             resultado = self.service.inserir_item(dados, usuario="andre")
 
             if resultado["status"] == "ok":
-                self.recarregar_tabela()
+                self.carregar_tabela()
             else:
                 print("Erro:", resultado["mensagem"])
+            
+    def carregar_tabela(self):
+        itens = self.service.listar_itens()
+        self.tabela.carregar_dados(itens)   
+        
+    def recarregar_dados(self):
+        caminho = "planilhas/estoque_lab_completa.xlsx"
+
+        importar_para_banco(caminho)
+
+        self.carregar_tabela() 

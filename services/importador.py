@@ -1,5 +1,6 @@
 import pandas as pd
 from controllers.crud import Crud
+from openpyxl import load_workbook
 
 
 # 🔥 MAPEAMENTO CORRETO (ALINHADO COM SEU BANCO)
@@ -77,3 +78,33 @@ def importar_para_banco(caminho):
             print("Erro ao inserir:", resultado["mensagem"])
 
     print("Importação concluída!")
+    
+def recarregar_dados(self):
+    caminho = "planilhas/estoque_lab_completa.xlsx"
+
+    importar_para_banco(caminho)
+
+    crud = Crud()
+    itens = crud.listar_itens()
+
+    self.tabela.carregar_dados(itens)
+    
+from openpyxl import load_workbook
+
+def salvar_com_template(dados, caminho_template, caminho_saida):
+    wb = load_workbook(caminho_template)
+    ws = wb.active
+
+    # limpa dados antigos (mantém formatação)
+    ws.delete_rows(2, ws.max_row)
+
+    for i, item in enumerate(dados, start=2):
+        ws[f"A{i}"] = item["nome"]
+        ws[f"B{i}"] = item["tipo"]
+        ws[f"C{i}"] = item["modelo"]
+        ws[f"D{i}"] = item["quantidade"]
+        ws[f"E{i}"] = item["caixa"]
+        ws[f"F{i}"] = item["localizacao"]
+        ws[f"G{i}"] = item["slot"]
+
+    wb.save(caminho_saida)

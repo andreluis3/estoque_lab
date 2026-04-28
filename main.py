@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import QApplication
 from database.db import criar_tabela
 from ui.janela_principal import MainWindow
 from ui.tabela_estoque import TabelaEstoque
-from services.importador import importar_para_banco
 from controllers.crud import Crud
+from services.importador import importar_para_banco
 
 
 def main():

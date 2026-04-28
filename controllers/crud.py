@@ -293,4 +293,51 @@ class Crud:
                 "mensagem": str(e)
             }
             
-            
+        
+    def buscar_nomes_like(self, texto):
+        query = """
+            SELECT DISTINCT nome
+            FROM itens
+            WHERE nome LIKE ?
+            LIMIT 10
+        """
+        return [r[0] for r in self.conn.execute(query, (f"%{texto}%",)).fetchall()]
+    
+    def buscar_por_nome_exato(self, nome):
+        query = "SELECT * FROM itens WHERE nome = ?"
+        return self.conn.execute(query, (nome,)).fetchone()
+    
+    def atualizar_quantidade(self, nome, modelo, nova_qtd):
+        query = """
+            UPDATE itens
+            SET quantidade = ?
+            WHERE nome = ? AND modelo = ?
+        """
+        self.conn.execute(query, (nova_qtd, nome, modelo))
+        self.conn.commit()
+        
+    def buscar_item(self, texto, filtro="nome"):
+        cursor = self.conn.cursor()
+
+        if filtro == "nome":
+            query = "SELECT * FROM itens WHERE nome LIKE ? LIMIT 20"
+            params = (f"%{texto}%",)
+
+        elif filtro == "modelo":
+            query = "SELECT * FROM itens WHERE modelo LIKE ? LIMIT 20"
+            params = (f"%{texto}%",)
+
+        elif filtro == "nome_modelo":
+            query = """
+                SELECT * FROM itens
+                WHERE nome LIKE ? OR modelo LIKE ?
+                LIMIT 20
+            """
+            params = (f"%{texto}%", f"%{texto}%")
+
+        else:
+            return []
+
+        result = cursor.execute(query, params).fetchall()
+
+        return result
