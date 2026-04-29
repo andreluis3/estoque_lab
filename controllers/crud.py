@@ -304,8 +304,22 @@ class Crud:
         return [r[0] for r in self.conn.execute(query, (f"%{texto}%",)).fetchall()]
     
     def buscar_por_nome_exato(self, nome):
-        query = "SELECT * FROM itens WHERE nome = ?"
-        return self.conn.execute(query, (nome,)).fetchone()
+        row = self.conn.execute("""
+            SELECT nome, tipo, modelo, caixa, localizacao, slot
+            FROM itens WHERE nome = ?
+        """, (nome,)).fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "nome": row[0],
+            "tipo": row[1],
+            "modelo": row[2],
+            "caixa": row[3],
+            "localizacao": row[4],
+            "slot": row[5],
+        }
     
     def atualizar_quantidade(self, nome, modelo, nova_qtd):
         query = """
@@ -341,3 +355,57 @@ class Crud:
         result = cursor.execute(query, params).fetchall()
 
         return result
+    
+    def buscar_por_nome(self, nome):
+        cursor = self.conn.cursor()
+
+        cursor.execute("""
+            SELECT nome, tipo, modelo, caixa, localizacao, slot
+            FROM itens
+            WHERE LOWER(nome) LIKE LOWER(?)
+            LIMIT 1
+        """, (nome + "%",))
+
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "nome": row[0],
+            "tipo": row[1],
+            "modelo": row[2],
+            "caixa": row[3],
+            "localizacao": row[4],
+            "slot": row[5],
+        }
+        
+    def buscar_padrao_mais_comum(self, texto):
+        cursor = self.conn.cursor()
+
+        cursor.execute("""
+            SELECT 
+                tipo,
+                caixa,
+                localizacao,
+                slot,
+                COUNT(*) as freq
+            FROM itens
+            WHERE LOWER(nome) LIKE LOWER(?)
+            GROUP BY tipo, caixa, localizacao, slot
+            ORDER BY freq DESC
+            LIMIT 1
+        """, (f"%{texto}%",))
+
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "tipo": row[0],
+            "caixa": row[1],
+            "localizacao": row[2],
+            "slot": row[3],
+            "frequencia": row[4]  # opcional (útil pra debug)
+        }

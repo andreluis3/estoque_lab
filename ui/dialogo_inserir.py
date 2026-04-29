@@ -4,15 +4,19 @@ from PyQt6.QtWidgets import (
 
 from controllers import crud
 from PyQt6.QtWidgets import QSpinBox
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QStringListModel, QTimer, Qt
 from services.cache import AutocompleteCache
 from PyQt6.QtWidgets import QComboBox
+from PyQt6.QtCore import QStringListModel
 
 class DialogoInserir(QDialog):
-    def __init__(self, crud):
+    def __init__(self, service):
         super().__init__()
 
-        self.crud = crud
+        self.service = service
+        self.service = service
+        self.crud = service.crud
+
         self.cache = AutocompleteCache()
 
         self.setWindowTitle("Adicionar Equipamento")
@@ -21,7 +25,6 @@ class DialogoInserir(QDialog):
         self.setup_autocomplete()
         self.setup_debounce()
         self.setup_signals()
-        self.crud = crud
 
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -67,9 +70,14 @@ class DialogoInserir(QDialog):
 
         self.setLayout(layout)
         
+  
+
     def setup_autocomplete(self):
-        self.completer = QCompleter([])
-        self.completer.setCaseSensitivity(False)
+        self.model = QStringListModel()
+
+        self.completer = QCompleter()
+        self.completer.setModel(self.model)
+        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
 
         self.nome.setCompleter(self.completer)
@@ -85,6 +93,7 @@ class DialogoInserir(QDialog):
     def setup_signals(self):
         self.nome.textChanged.connect(self.timer.start)
         self.filtro_busca.currentTextChanged.connect(self.atualizar_autocomplete)
+        self.nome.textChanged.connect(self.auto_preencher_campos)
         
     def get_dados(self):
         return {
@@ -116,16 +125,6 @@ class DialogoInserir(QDialog):
         else:
             QMessageBox.critical(self, "Erro", resultado["mensagem"])
             
-    def configurar_autocomplete(self):
-        self.completer = QCompleter([])
-        self.completer.setCaseSensitivity(False)
-        self.completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
-
-        self.nome.setCompleter(self.completer)
-
-        self.completer.activated.connect(self.ao_selecionar_nome)
-        
-        
         
     def atualizar_autocomplete(self):
         texto = self.nome.text().strip()
@@ -144,19 +143,133 @@ class DialogoInserir(QDialog):
             dados = self.crud.buscar_item(texto, filtro)
             self.cache.set(cache_key, dados)
 
-        nomes = [item[1] for item in dados]  # coluna nome
+        nomes = []
+        
+        for item in dados:
+            if isinstance(item, dict):
+                nomes.append(item.get("nome",""))
+            else:
+                nomes.append(str(item[1]))  # nome_modelo
 
-        self.completer.model().setStringList(nomes)
+        self.model.setStringList(nomes)
+        
+    def auto_preencher_campos(self, texto):
+        texto = texto.strip().lower()
+
+        if len(texto) < 3:
+            return
+
+        item = self.service.buscar_por_nome(texto)
+        padrao = self.service.buscar_padrao_mais_comum(texto)
+        # ========================
+        # 1. SE ENCONTROU NO BANCO
+        # ========================
+        if padrao:
+            if not self.tipo.text():
+                self.tipo.setText(padrao.get("tipo", ""))
+
+            if not self.caixa.text():
+                self.caixa.setText(padrao.get("caixa", ""))
+
+            if not self.localizacao.text():
+                self.localizacao.setText(padrao.get("localizacao", ""))
+
+            if not self.slot.text():
+                self.slot.setText(padrao.get("slot", ""))
+                
+        
+    
+        if item:
+            if not self.tipo.text():
+                self.tipo.setText(item.get("tipo", ""))
+
+            if not self.caixa.text():
+                self.caixa.setText(item.get("caixa", ""))
+
+            if not self.localizacao.text():
+                self.localizacao.setText(item.get("localizacao", ""))
+
+            if not self.slot.text():
+                self.slot.setText(item.get("slot", ""))
+
+        def set_if_empty(field, value):
+            if not field.text():
+                field.setText(value)
+
+        if "conector" in texto or "rf" in texto:
+            set_if_empty(self.tipo, "Conector de RF")
+            set_if_empty(self.caixa, "Maleta preta de conectores de RF")
+            set_if_empty(self.localizacao, "Mesa branca")
+
+        elif "resistor" in texto:
+            set_if_empty(self.tipo, "Resistor")
+            set_if_empty(self.caixa, "Caixa de resistores")
+            set_if_empty(self.localizacao, "Armário")
+
+        elif "esp32" in texto:
+            set_if_empty(self.tipo, "ESP32")
+            set_if_empty(self.caixa, "Caixa microcontroladores")
+            set_if_empty(self.localizacao, "Armário")
+            set_if_empty(self.slot, "ESP32")
+
+        elif "capacitor" in texto:
+            set_if_empty(self.tipo, "Capacitor")
+            set_if_empty(self.caixa, "Caixa de capacitores")
+            set_if_empty(self.localizacao, "Armário")
+
+        elif "relé" in texto or "rele" in texto:
+            set_if_empty(self.tipo, "Relé")
+            set_if_empty(self.caixa, "Caixa do relé")
+            set_if_empty(self.localizacao, "Armário")
+
+        elif "led" in texto:
+            set_if_empty(self.tipo, "LED")
+            set_if_empty(self.caixa, "Caixa dos LED")
+            set_if_empty(self.localizacao, "Armário")
+
+        elif "diodo" in texto:
+            set_if_empty(self.tipo, "Diodo")
+            set_if_empty(self.caixa, "Caixa de diodos")
+            set_if_empty(self.localizacao, "Armário")
+
+
+        elif "transistor" in texto or "ci" in texto:
+            set_if_empty(self.tipo, "Semicondutor")
+            set_if_empty(self.caixa, "Caixa de transistores e CI")
+            set_if_empty(self.localizacao, "Armário")
+
+        elif "display" in texto:
+            set_if_empty(self.tipo, "Display")
+            set_if_empty(self.caixa, "Caixa dos displays")
+            set_if_empty(self.localizacao, "Armário")
+
+
+        elif "protoboard" in texto:
+            set_if_empty(self.tipo, "Protoboard")
+            set_if_empty(self.caixa, "Caixa da protoboard preta")
+            set_if_empty(self.localizacao, "Armário")
+
+    
+        elif "modulo" in texto or "sensor" in texto:
+            set_if_empty(self.tipo, "Módulo")
+            set_if_empty(self.caixa, "Caixa de módulos sensores")
+            set_if_empty(self.localizacao, "Armário")
+
+        elif "fusivel" in texto:
+            set_if_empty(self.tipo, "Fusível")
+            set_if_empty(self.caixa, "Caixa de fusíveis")
+            set_if_empty(self.localizacao, "Armário")
             
+    
     def event_filter(self, obj, event):
-        if obj == self.input_nome and event.type() == event.Type.KeyPress:
+        if obj == self.nome and event.type() == event.Type.KeyPress:
             if event.key() == Qt.Key.Key_Tab:
                 self.completer.complete()
                 return True
         return super().event_filter(obj, event)
     
     def ao_selecionar_nome(self, nome):
-        item = self.crud.buscar_por_nome(nome)
+        item = self.service.buscar_por_nome(nome)
 
         if not item:
             return
@@ -197,4 +310,5 @@ class DialogoInserir(QDialog):
 
         super().keyPressEvent(event)
                     
+
            
