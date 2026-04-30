@@ -15,11 +15,12 @@ from services.item_service import ItemService
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        super().__init__()
+        super().__init__() 
 
         self.setWindowTitle("ARMAZENAMENTO DE COMPONENTES - LABORATÓRIO DE EMC")
         self.resize(1000, 600)
 
+        # ✅ ORDEM CORRETA
         self.crud = Crud()
         self.service = ItemService(self.crud)
 
@@ -51,15 +52,7 @@ class MainWindow(QMainWindow):
 
         self.carregar_tabela()
         
-    def recarregar_dados(self):
-        caminho = "planilhas/estoque_lab_completa.xlsx"
-
-        importar_para_banco(caminho)
-
-        crud = Crud()
-        itens = crud.listar_itens()
-
-        self.tabela.carregar_dados(itens) 
+ 
         
     def on_item_changed(self, item): #funcao de clique
         try:
@@ -111,10 +104,6 @@ class MainWindow(QMainWindow):
                     
             self.tabela.setRowHidden(row, not match)
             
-            
-    def recarregar_tabela(self):
-        itens = self.service.listar_itens()
-        self.tabela.carregar_dados(itens)
     
     def abrir_dialogo(self):
         print("Botão clicado!")
@@ -123,15 +112,6 @@ class MainWindow(QMainWindow):
 
         if dialogo.exec():
             self.carregar_tabela()
-
-            dados = dialogo.get_dados()
-
-            resultado = self.service.inserir_item(dados, usuario="andre")
-
-            if resultado["status"] == "ok":
-                self.carregar_tabela()
-            else:
-                print("Erro:", resultado["mensagem"])
             
     def carregar_tabela(self):
         itens = self.service.listar_itens()
@@ -139,7 +119,5 @@ class MainWindow(QMainWindow):
         
     def recarregar_dados(self):
         caminho = "planilhas/estoque_lab_completa.xlsx"
-
         importar_para_banco(caminho)
-
         self.carregar_tabela() 
