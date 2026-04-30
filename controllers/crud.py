@@ -19,14 +19,14 @@ class Crud:
             existente = self.item_existe(dados["nome"], dados["modelo"])
 
             if existente:
-                item_id, quantidade_atual = existente
-                nova_qtd = quantidade_atual + dados["quantidade"]
+                item_id, _ = existente
 
+                # 🔥 SUBSTITUI a quantidade (não soma!)
                 self.cursor.execute("""
                     UPDATE itens
                     SET quantidade = ?
                     WHERE id = ?
-                """, (nova_qtd, item_id))
+                """, (dados["quantidade"], item_id))
 
                 acao = "atualizado"
 
@@ -71,15 +71,14 @@ class Crud:
             }
 
     def registrar_movimentacao(self, item_id, tipo, quantidade, usuario):
-        self.cursor.execute("""
-            INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
-            VALUES (?, ?, ?, ?)
-        """, (item_id, tipo, quantidade, usuario))
         try:
-            self.conn.commit()
+            self.cursor.execute("""
+                INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
+                VALUES (?, ?, ?, ?)
+            """, (item_id, tipo, quantidade, usuario))
+
         except Exception as e:
             print("Erro ao registrar movimentação:", e)
-
 
             
     def listar_itens(self):

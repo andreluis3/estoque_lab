@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QLabel
 from ui.dialogo_inserir import DialogoInserir
 from PyQt6.QtWidgets import QPushButton
 from services.importador import importar_para_banco
-from services.item_service import ItemService
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
 
         # ✅ ORDEM CORRETA
         self.crud = Crud()
-        self.service = ItemService(self.crud)
+
 
         container = QWidget()
         layout = QVBoxLayout()
@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
 
             dados = {campo: valor}
 
-            resultado = self.service.atualizar_item(item_id, dados, usuario="andre")
+            resultado = self.crud.atualizar_item(item_id, dados, usuario="andre")
 
             if resultado["status"] != "ok":
                 raise ValueError(resultado["mensagem"])
@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
             self.carregar_tabela()
             
     def carregar_tabela(self):
-        itens = self.service.listar_itens()
+        itens = self.crud.listar_itens()
         self.tabela.carregar_dados(itens)   
         
     def recarregar_dados(self):

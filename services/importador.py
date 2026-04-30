@@ -69,6 +69,10 @@ def importar_excel(caminho: str) -> list[dict]:
 def importar_para_banco(caminho):
     crud = Crud()
 
+    # 💣 LIMPA TABELA ANTES
+    crud.cursor.execute("DELETE FROM itens")
+    crud.conn.commit()
+
     dados = importar_excel(caminho)
 
     for item in dados:
