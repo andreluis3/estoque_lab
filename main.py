@@ -3,9 +3,10 @@ from PyQt6.QtWidgets import QApplication
 
 from database.db import criar_tabela
 from ui.janela_principal import MainWindow
-from ui.tabela_estoque import TabelaEstoque
 from controllers.crud import Crud
-from services.importador import importar_para_banco
+
+from utils.comparador import comparar_planilha_banco
+from services.sincronizador import sincronizar_planilha_banco
 
 
 def main():
@@ -13,13 +14,14 @@ def main():
 
     app = QApplication(sys.argv)
 
-    criar_tabela()  # 🔥 SEMPRE PRIMEIRO
+    criar_tabela()
 
-
-    #importar_para_banco("planilhas/estoque_lab_completa.xlsx")
+    # 📥 SINCRONIZAÇÃO REMOVIDA (agora manual via botão)
+    # sincronizar_planilha_banco("planilhas/estoque_lab_completa.xlsx")
 
     crud = Crud()
     itens = crud.listar_itens()
+
     print("Itens no banco:", len(itens))
 
     window = MainWindow()

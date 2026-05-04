@@ -17,10 +17,12 @@ def criar_tabela():
         nome TEXT NOT NULL,
         tipo TEXT NOT NULL,
         modelo TEXT NOT NULL,
-        quantidade INTEGER NOT NULL,
+        quantidade INTEGER NOT NULL CHECK(quantidade >= 0),
         caixa TEXT NOT NULL,
         localizacao TEXT NOT NULL,
-        slot TEXT
+        slot TEXT,
+        
+        UNIQUE(nome, modelo)
     )
     """)
 

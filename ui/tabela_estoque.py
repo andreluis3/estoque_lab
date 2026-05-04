@@ -7,36 +7,18 @@ class TabelaEstoque(QTableWidget):
     def __init__(self):
         super().__init__()
 
-        self.colunas = ["ID", "Nome", "Tipo", "Modelo", "Quantidade", "Caixa", "Localização", "Slot"]
+        self.setColumnCount(8)
+        self.setHorizontalHeaderLabels([
+            "ID", "Nome", "Tipo", "Modelo",
+            "Quantidade", "Caixa", "Localização", "Slot"
+        ])
 
-        self.setColumnCount(len(self.colunas))
-        self.setHorizontalHeaderLabels(self.colunas)
-
-        # 🔥 esconder ID (mas ele existe!)
-        self.setColumnHidden(0, True)
-
-        # estética
-        self.horizontalHeader().setStretchLastSection(True)
-        #ajustar colunas para tabela
-        self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        header = self.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)          # Nome
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents) # Tipo
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents) # Modelo
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents) # Quantidade
-        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents) # Caixa
-        header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)          # Localização
-        header.setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents) # Slot
-        self.setAlternatingRowColors(True)
-        
     def carregar_dados(self, itens):
-        self.setRowCount(0)
+        self.blockSignals(True)  # 🔥 evita bug ao carregar
 
-        for item in itens:
-            row = self.rowCount()
-            self.insertRow(row)
+        self.setRowCount(len(itens))
 
+        for row, item in enumerate(itens):
             valores = [
                 item["id"],
                 item["nome"],
@@ -45,13 +27,19 @@ class TabelaEstoque(QTableWidget):
                 item["quantidade"],
                 item["caixa"],
                 item["localizacao"],
-                item["slot"]
+                item["slot"],
             ]
 
             for col, valor in enumerate(valores):
                 cell = QTableWidgetItem(str(valor))
-                cell.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+                # 🔒 trava ID
+                if col == 0:
+                    cell.setFlags(cell.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
                 self.setItem(row, col, cell)
+
+        self.blockSignals(False)   
 
     def adicionar_item(self, dados):
         row = self.rowCount()

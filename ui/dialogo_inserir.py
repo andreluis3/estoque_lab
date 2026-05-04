@@ -266,7 +266,7 @@ class DialogoInserir(QDialog):
             if event.key() == Qt.Key.Key_Tab:
                 self.completer.complete()
                 return True
-        return super().event_filter(obj, event)
+        return super().eventFilter(obj, event)
     
     def ao_selecionar_nome(self, nome):
         item = self.service.buscar_por_nome(nome)

@@ -5,13 +5,15 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer
 
+from PyQt6.QtWidgets import QMessageBox
+
 from ui.tabela_estoque import TabelaEstoque
 from controllers.crud import Crud
 from PyQt6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QLabel
 from ui.dialogo_inserir import DialogoInserir
 from PyQt6.QtWidgets import QPushButton
 from services.importador import importar_para_banco
-
+from services.importador import gerar_relatorio_inconsistencias
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -52,25 +54,50 @@ class MainWindow(QMainWindow):
 
         self.carregar_tabela()
         
- 
+    def tratar_erro(self, erro):
+        print("ERRO:", erro)
+        self.mostrar_erro(str(erro))
         
-    def on_item_changed(self, item): #funcao de clique
+    def on_item_changed(self, item):
         try:
             self.tabela.blockSignals(True)
+
+            if item is None:
+                return
 
             row = item.row()
             col = item.column()
 
-            # ID na coluna 0
-            item_id = int(self.tabela.item(row, 0).text())
+            item_id_widget = self.tabela.item(row, 0)
+            if item_id_widget is None:
+                return
+
+            item_id = int(item_id_widget.text())
 
             colunas = ["id", "nome", "tipo", "modelo", "quantidade", "caixa", "localizacao", "slot"]
 
             campo = colunas[col]
-            valor = item.text()
+            valor = item.text().strip()
 
+            # ❌ não permitir vazio
+            if not valor:
+                self.mostrar_erro(f"O campo '{campo}' não pode ser vazio")
+                self.carregar_tabela()
+                return
+
+            # 🔢 valida quantidade
             if campo == "quantidade":
+                if not valor.isdigit():
+                    self.mostrar_erro("Quantidade deve ser número inteiro positivo")
+                    self.carregar_tabela()
+                    return
+
                 valor = int(valor)
+
+                if valor < 0:
+                    self.mostrar_erro("Quantidade não pode ser negativa")
+                    self.carregar_tabela()
+                    return
 
             dados = {campo: valor}
 
@@ -79,14 +106,16 @@ class MainWindow(QMainWindow):
             if resultado["status"] != "ok":
                 raise ValueError(resultado["mensagem"])
 
-            # feedback visual
             item.setBackground(Qt.GlobalColor.green)
+            print(f"✅ Item {item_id} atualizado: {campo} = {valor}")  # DEBUG
 
-            QTimer.singleShot(800, lambda: item.setBackground(Qt.GlobalColor.white))
+            # 🔄 Recarregar tabela para refletir mudanças
+            self.carregar_tabela()
 
         except Exception as e:
-            item.setBackground(Qt.GlobalColor.red)
-            print("Erro:", e)
+            if item:
+                item.setBackground(Qt.GlobalColor.red)
+            self.tratar_erro(e)
 
         finally:
             self.tabela.blockSignals(False)
@@ -98,7 +127,8 @@ class MainWindow(QMainWindow):
             for col in range(self.tabela.columnCount()):
                 item = self.tabela.item(row, col)
 
-                if item and texto.lower() in item.text().lower():
+                if item:
+                    valor = item.text()
                     match = True
                     break
                     
@@ -108,7 +138,7 @@ class MainWindow(QMainWindow):
     def abrir_dialogo(self):
         print("Botão clicado!")
 
-        dialogo = DialogoInserir(self.service)
+        dialogo = DialogoInserir(self.crud)
 
         if dialogo.exec():
             self.carregar_tabela()
@@ -119,5 +149,59 @@ class MainWindow(QMainWindow):
         
     def recarregar_dados(self):
         caminho = "planilhas/estoque_lab_completa.xlsx"
-        importar_para_banco(caminho)
-        self.carregar_tabela() 
+
+        self.btn_recarregar.setEnabled(False)
+        self.btn_recarregar.setText("⏳ Sincronizando...")
+
+        from services.sincronizador import sincronizar_planilha_banco
+        sincronizar_planilha_banco(caminho)
+
+        self.carregar_tabela()
+
+        from services.importador import validar_diferencas
+        erros = validar_diferencas(caminho)
+
+        self.mostrar_inconsistencias(erros)
+
+        self.btn_recarregar.setEnabled(True)
+        self.btn_recarregar.setText("🔄 Sincronizar Planilha")
+        
+    def mostrar_erro(self, mensagem):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Critical)
+        msg.setWindowTitle("Erro")
+        msg.setText("Ocorreu um erro no sistema")
+        msg.setInformativeText(mensagem)
+        msg.exec()
+        
+    def mostrar_sucesso(self, mensagem):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.setWindowTitle("Sucesso")
+        msg.setText(mensagem)
+        msg.exec()
+        
+    def mostrar_inconsistencias(self, erros):
+        if not erros:
+            self.mostrar_sucesso("✅ Banco sincronizado com a planilha!")
+            return
+
+        texto = ""
+
+        for erro in erros[:15]:
+            texto += (
+                f"Item: {erro['nome']}\n"
+                f"Modelo: {erro['modelo']}\n"
+                f"Excel: {erro['excel']} | Banco: {erro['banco']}\n"
+                "------------------------\n"
+            )
+
+        if len(erros) > 15:
+            texto += f"\n... e mais {len(erros) - 15} inconsistências"
+
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setWindowTitle("Inconsistências encontradas")
+        msg.setText("⚠️ Diferenças entre planilha e banco")
+        msg.setDetailedText(texto)
+        msg.exec()

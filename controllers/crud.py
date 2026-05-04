@@ -1,12 +1,18 @@
 from database.db import conectar_db
 
+DEBUG = False  #Chave para logs
+def log(msg):
+        if DEBUG:
+            print(msg)
+
 class Crud:
     def __init__(self):
         self.conn = conectar_db()
         self.cursor = self.conn.cursor()
        
     
-    
+
+
     def inserir_item(self, dados, usuario="sistema"):
         try:
             # 1. validar
@@ -15,13 +21,17 @@ class Crud:
             # 2. normalizar
             dados = self.normalizar_dados(dados)
 
+            log(f"📥 Recebido: {dados}")
+
             # 3. verificar duplicidade
             existente = self.item_existe(dados["nome"], dados["modelo"])
 
             if existente:
-                item_id, _ = existente
+                item_id, qtd_atual = existente
 
-                # 🔥 SUBSTITUI a quantidade (não soma!)
+                log(f"🔁 Atualizando ID {item_id} | {qtd_atual} → {dados['quantidade']}")
+
+                # 🔥 SUBSTITUI quantidade (modo planilha)
                 self.cursor.execute("""
                     UPDATE itens
                     SET quantidade = ?
@@ -31,9 +41,13 @@ class Crud:
                 acao = "atualizado"
 
             else:
+                log("🆕 Inserindo novo item")
+
                 self.cursor.execute("""
-                    INSERT INTO itens (nome, tipo, modelo, quantidade, caixa, localizacao, slot)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO itens (
+                        nome, tipo, modelo, quantidade,
+                        caixa, localizacao, slot
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (
                     dados["nome"],
                     dados["tipo"],
@@ -47,15 +61,15 @@ class Crud:
                 item_id = self.cursor.lastrowid
                 acao = "inserido"
 
-            # 🔥 REGISTRAR MOVIMENTAÇÃO (AQUI!)
-            self.registrar_movimentacao(
-                item_id,
-                "entrada",
-                dados["quantidade"],
-                usuario
-            )
+            # 🔥 movimentação só fora de importação
+            if usuario != "importacao":
+                self.registrar_movimentacao(
+                    item_id,
+                    "entrada",
+                    dados["quantidade"],
+                    usuario
+                )
 
-            # commit final
             self.conn.commit()
 
             return {
@@ -65,6 +79,8 @@ class Crud:
             }
 
         except Exception as e:
+            print(f"❌ Erro ao inserir item: {e}")  # 👈 erro REAL continua aparecendo
+
             return {
                 "status": "erro",
                 "mensagem": str(e)
@@ -102,6 +118,9 @@ class Crud:
 
     def validar_dados_item(self, dados):
         campos_obrigatorios = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
+        
+        if dados["quantidade"] > 100000:
+             raise ValueError("Quantidade absurda detectada")
 
         for campo in campos_obrigatorios:
             if campo not in dados or not str(dados[campo]).strip():
@@ -125,24 +144,26 @@ class Crud:
         for campo in  [";", "--", "/*", "*/"]:
             for valor in [dados["nome"], dados["tipo"], dados["modelo"], dados["caixa"], dados["localizacao"], dados["slot"]]:
                 if campo in valor:
-                    raise ValueError(f"O campo '{valor}' contém caracteres proibidos: {campo}")    
+                    raise ValueError(f"O campo '{valor}' contém caracteres proibidos: {campo}")   
             
     def item_existe(self, nome, modelo):
         return self.cursor.execute("""
             SELECT id, quantidade FROM itens
-            WHERE nome = ? AND modelo = ?
+            WHERE LOWER(nome) = LOWER(?) AND LOWER(modelo) = LOWER(?)
         """, (nome, modelo)).fetchone()
 
-
     def normalizar_dados(self, dados):
+        def limpar(texto):
+            return str(texto).strip().lower()
+
         return {
-            "nome": dados.get("nome", "").strip().title(),
-            "tipo": dados.get("tipo", "").strip().title(),
-            "modelo": dados.get("modelo", "").strip().upper(),
+            "nome": limpar(dados.get("nome")),
+            "tipo": limpar(dados.get("tipo")),
+            "modelo": limpar(dados.get("modelo")),
             "quantidade": int(dados.get("quantidade", 0)),
-            "caixa": dados.get("caixa", "").strip(),
-            "localizacao": dados.get("localizacao", "Não informado").strip().title(),
-            "slot": dados.get("slot", "").strip().upper()
+            "caixa": limpar(dados.get("caixa")),
+            "localizacao": limpar(dados.get("localizacao")),
+            "slot": limpar(dados.get("slot")),
         }
 
     def controlar_duplicidade(self, nome, modelo, item_id=None):
