@@ -8,57 +8,19 @@ from ui.tabela_estoque import TabelaEstoque
 from ui.dialogo_inserir import DialogoInserir
 from ui.tela_historico import TelaHistorico
 from controllers.crud import Crud
+from services.authenticator import autenticar
+from services.log_service import registrar_log
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("ARMAZENAMENTO DE COMPONENTES - LABORATÓRIO DE EMC")
-        self.resize(1100, 650)
-
+        self.usuario_logado = None
         self.crud = Crud()
 
-        container = QWidget()
-        layout = QVBoxLayout()
-
-        # ── Busca ──────────────────────────────────────────────────────────
-        self.input_busca = QLineEdit()
-        self.input_busca.setPlaceholderText("🔍 Buscar por nome, tipo, modelo...")
-        self.input_busca.textChanged.connect(self.filtrar_tabela)
-        layout.addWidget(self.input_busca)
-
-        # ── Tabela ─────────────────────────────────────────────────────────
-        self.tabela = TabelaEstoque()
-        self.tabela.itemChanged.connect(self.on_item_changed)
-        layout.addWidget(self.tabela)
-
-        # ── Botões ─────────────────────────────────────────────────────────
-        botoes = QHBoxLayout()
-
-        self.botao_add = QPushButton("➕ Adicionar Equipamento")
-        self.botao_add.clicked.connect(self.abrir_dialogo)
-
-        self.btn_recarregar = QPushButton("🔄 Recarregar Banco")
-        self.btn_recarregar.clicked.connect(self.carregar_tabela)
-
-        self.btn_historico = QPushButton("📋 Ver Histórico")
-        self.btn_historico.clicked.connect(self.abrir_historico)
-
-        botoes.addWidget(self.botao_add)
-        botoes.addWidget(self.btn_recarregar)
-        botoes.addWidget(self.btn_historico)
-        layout.addLayout(botoes)
-
-        # ── Status ─────────────────────────────────────────────────────────
-        self.label_status = QLabel("")
-        self.label_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.label_status)
-
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-        self.carregar_tabela()
+        # Inicia com tela de login
+        self.criar_tela_login()
 
     # ── Tabela ─────────────────────────────────────────────────────────────
 
@@ -118,7 +80,7 @@ class MainWindow(QMainWindow):
                     return
                 valor = int(valor)
 
-            resultado = self.crud.atualizar_item(item_id, {campo: valor}, usuario="andre")
+            resultado = self.crud.atualizar_item(item_id, {campo: valor}, usuario=self.usuario_logado or "sistema")
 
             if resultado["status"] == "ok":
                 item.setBackground(Qt.GlobalColor.green)
@@ -164,3 +126,97 @@ class MainWindow(QMainWindow):
         msg.setWindowTitle("Sucesso")
         msg.setText(mensagem)
         msg.exec()
+
+    def mostrar_sistema_principal(self):
+        """Cria e mostra a interface principal do sistema após login."""
+        self.setWindowTitle("ARMAZENAMENTO DE COMPONENTES - LABORATÓRIO DE EMC")
+        self.resize(1100, 650)
+
+        container = QWidget()
+        layout = QVBoxLayout()
+
+        # ── Busca ──────────────────────────────────────────────────────────
+        self.input_busca = QLineEdit()
+        self.input_busca.setPlaceholderText("🔍 Buscar por nome, tipo, modelo...")
+        self.input_busca.textChanged.connect(self.filtrar_tabela)
+        layout.addWidget(self.input_busca)
+
+        # ── Tabela ─────────────────────────────────────────────────────────
+        self.tabela = TabelaEstoque()
+        self.tabela.itemChanged.connect(self.on_item_changed)
+        layout.addWidget(self.tabela)
+
+        # ── Botões ─────────────────────────────────────────────────────────
+        botoes = QHBoxLayout()
+
+        self.botao_add = QPushButton("➕ Adicionar Equipamento")
+        self.botao_add.clicked.connect(self.abrir_dialogo)
+
+        self.btn_recarregar = QPushButton("🔄 Recarregar Banco")
+        self.btn_recarregar.clicked.connect(self.carregar_tabela)
+
+        self.btn_historico = QPushButton("📋 Ver Histórico")
+        self.btn_historico.clicked.connect(self.abrir_historico)
+
+        botoes.addWidget(self.botao_add)
+        botoes.addWidget(self.btn_recarregar)
+        botoes.addWidget(self.btn_historico)
+        layout.addLayout(botoes)
+
+        # ── Status ─────────────────────────────────────────────────────────
+        self.label_status = QLabel("")
+        self.label_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.label_status)
+
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
+        self.carregar_tabela()
+        
+    def criar_tela_login(self):
+        self.widget_login = QWidget()
+        layout = QVBoxLayout()
+
+        # Título
+        titulo = QLabel("🔐 Login do Sistema")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo.setStyleSheet("font-size: 18px; font-weight: bold;")
+        layout.addWidget(titulo)
+
+        # Campo usuário
+        self.input_usuario = QLineEdit()
+        self.input_usuario.setPlaceholderText("Usuário (ex: andre)")
+        layout.addWidget(self.input_usuario)
+
+        # Campo senha
+        self.input_senha = QLineEdit()
+        self.input_senha.setPlaceholderText("Senha (DD/MM/AA)")
+        self.input_senha.setEchoMode(QLineEdit.EchoMode.Password)
+        layout.addWidget(self.input_senha)
+
+        # Botão login
+        botao_login = QPushButton("Entrar")
+        layout.addWidget(botao_login)
+
+        # Status
+        self.label_login_status = QLabel("")
+        self.label_login_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.label_login_status)
+
+        # Ação do botão
+        def fazer_login():
+            usuario = self.input_usuario.text().strip().lower()
+            senha = self.input_senha.text().strip()
+
+            if autenticar(usuario, senha):
+                self.usuario_logado = usuario
+                self.label_login_status.setText("✅ Login realizado com sucesso")
+                registrar_log(usuario, "LOGIN", "Usuário entrou no sistema")
+                self.mostrar_sistema_principal()  # 🔥 entra no sistema
+            else:
+                self.label_login_status.setText("❌ Usuário ou senha inválidos")
+
+        botao_login.clicked.connect(fazer_login)
+
+        self.widget_login.setLayout(layout)
+        self.setCentralWidget(self.widget_login)

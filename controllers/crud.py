@@ -7,7 +7,7 @@ Toda inserção, atualização e exclusão é registrada em:
 """
 
 from database.db import conectar_db
-
+from services.log_service import registrar_log
 
 class Crud:
     def __init__(self):
@@ -42,6 +42,8 @@ class Crud:
                 )
                 self._registrar_movimentacao(item_id, "entrada", dados["quantidade"], usuario)
                 acao = "atualizado"
+                log_acao = "ENTRADA_MANUAL"
+                detalhe = f"{dados['nome']} | {dados['modelo']} | soma={dados['quantidade']} para {nova_qtd}"
 
             else:
                 self.cursor.execute("""
@@ -60,7 +62,10 @@ class Crud:
                 )
                 self._registrar_movimentacao(item_id, "entrada", dados["quantidade"], usuario)
                 acao = "inserido"
+                log_acao = "INSERIR_ITEM"
+                detalhe = f"{dados['nome']} | {dados['modelo']} | qtd={dados['quantidade']}"
 
+            registrar_log(usuario, log_acao, detalhe)
             self.conn.commit()
             return {"status": "ok", "acao": acao, "item_id": item_id}
 
@@ -128,16 +133,23 @@ class Crud:
                 item_dict["quantidade"], item_dict["caixa"],
                 item_dict["localizacao"], item_dict["slot"], item_id
             ))
-
-            # Loga campo por campo o que mudou
+    
             campos = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao", "slot"]
+            changes = []
             for campo in campos:
                 antes = str(snapshot_antes[campo])
                 depois = str(item_dict[campo])
                 if antes != depois:
                     self._registrar_historico(item_id, campo, antes, depois, usuario, "editado")
+                    changes.append(f"{campo}:{antes}->{depois}")
 
-            # Movimentação de quantidade
+            if changes:
+                registrar_log(
+                    usuario,
+                    "EDITAR_ITEM",
+                    f"{item_dict['nome']} | {item_dict['modelo']} | " + "; ".join(changes)
+                )
+
             diff = item_dict["quantidade"] - snapshot_antes["quantidade"]
             if diff != 0:
                 tipo_mov = "entrada" if diff > 0 else "saida"
@@ -149,9 +161,6 @@ class Crud:
         except Exception as e:
             return {"status": "erro", "mensagem": str(e)}
 
-    # ═══════════════════════════════════════════════════════════════════════
-    #  DELETAR
-    # ═══════════════════════════════════════════════════════════════════════
 
     def deletar_item(self, item_id, usuario="sistema"):
         try:
@@ -174,6 +183,7 @@ class Crud:
             )
 
             self.cursor.execute("DELETE FROM itens WHERE id=?", (item_id,))
+            registrar_log(usuario, "DELETAR_ITEM", f"{nome} | {modelo} | qtd={quantidade}")
             self.conn.commit()
 
             return {"status": "ok", "mensagem": "Item deletado com sucesso", "item_id": item_id}
@@ -181,9 +191,6 @@ class Crud:
         except Exception as e:
             return {"status": "erro", "mensagem": str(e)}
 
-    # ═══════════════════════════════════════════════════════════════════════
-    #  HISTÓRICO / AUDITORIA
-    # ═══════════════════════════════════════════════════════════════════════
 
     def listar_historico(self, item_id=None, usuario=None, acao=None, limite=200) -> list[dict]:
         """
@@ -359,6 +366,11 @@ class Crud:
             INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
             VALUES (?, ?, ?, ?)
         """, (item_id, tipo, quantidade, usuario))
+        registrar_log(
+            usuario,
+            f"MOVIMENTACAO_{tipo.upper()}",
+            f"item_id={item_id} | qtd={quantidade}"
+        )
 
     def _registrar_historico(self, item_id, campo, valor_anterior, valor_novo, usuario, acao):
         self.cursor.execute("""

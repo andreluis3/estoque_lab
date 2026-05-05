@@ -1,12 +1,13 @@
 import sqlite3
 import os
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "..", "database", "estoque.db")
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
 def conectar_db():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    db_path = os.path.join(BASE_DIR, "..", "database", "estoque.db")
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    print(f"📦 DB USADO PELO SISTEMA: {db_path}")
-    conn = sqlite3.connect(db_path)
+    print(f"📦 DB USADO PELO SISTEMA: {DB_PATH}")
+    conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     return conn
@@ -62,6 +63,13 @@ def criar_tabela():
         FOREIGN KEY (item_id) REFERENCES itens(id)
     )
     """)
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL
+    )
+      """)
 
     conn.commit()
     conn.close()
