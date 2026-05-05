@@ -1,330 +1,314 @@
+"""
+crud.py — Operações CRUD com auditoria completa.
+
+Toda inserção, atualização e exclusão é registrada em:
+  - movimentacoes: rastreia entradas/saídas de quantidade
+  - historico_alteracoes: rastreia qualquer mudança de campo
+"""
+
 from database.db import conectar_db
 
-DEBUG = False  #Chave para logs
-def log(msg):
-        if DEBUG:
-            print(msg)
 
 class Crud:
     def __init__(self):
         self.conn = conectar_db()
         self.cursor = self.conn.cursor()
-       
-    
 
+    # ═══════════════════════════════════════════════════════════════════════
+    #  INSERIR
+    # ═══════════════════════════════════════════════════════════════════════
 
     def inserir_item(self, dados, usuario="sistema"):
         try:
-            # 1. validar
             self.validar_dados_item(dados)
-
-            # 2. normalizar
             dados = self.normalizar_dados(dados)
 
-            log(f"📥 Recebido: {dados}")
-
-            # 3. verificar duplicidade
             existente = self.item_existe(dados["nome"], dados["modelo"])
 
             if existente:
-                item_id, qtd_atual = existente
+                # Item já existe: APENAS soma a quantidade (entrada manual)
+                item_id, quantidade_atual = existente
+                nova_qtd = quantidade_atual + dados["quantidade"]
 
-                log(f"🔁 Atualizando ID {item_id} | {qtd_atual} → {dados['quantidade']}")
-
-                # 🔥 SUBSTITUI quantidade (modo planilha)
                 self.cursor.execute("""
-                    UPDATE itens
-                    SET quantidade = ?
-                    WHERE id = ?
-                """, (dados["quantidade"], item_id))
+                    UPDATE itens SET quantidade=?, atualizado_em=CURRENT_TIMESTAMP
+                    WHERE id=?
+                """, (nova_qtd, item_id))
 
+                self._registrar_historico(
+                    item_id, "quantidade",
+                    str(quantidade_atual), str(nova_qtd),
+                    usuario, "entrada_manual"
+                )
+                self._registrar_movimentacao(item_id, "entrada", dados["quantidade"], usuario)
                 acao = "atualizado"
 
             else:
-                log("🆕 Inserindo novo item")
-
                 self.cursor.execute("""
-                    INSERT INTO itens (
-                        nome, tipo, modelo, quantidade,
-                        caixa, localizacao, slot
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO itens (nome, tipo, modelo, quantidade, caixa, localizacao, slot)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    dados["nome"],
-                    dados["tipo"],
-                    dados["modelo"],
-                    dados["quantidade"],
-                    dados["caixa"],
-                    dados["localizacao"],
-                    dados["slot"]
+                    dados["nome"], dados["tipo"], dados["modelo"], dados["quantidade"],
+                    dados["caixa"], dados["localizacao"], dados["slot"]
                 ))
-
                 item_id = self.cursor.lastrowid
+
+                self._registrar_historico(
+                    item_id, "*", None,
+                    f"{dados['nome']} | {dados['modelo']}",
+                    usuario, "inserido"
+                )
+                self._registrar_movimentacao(item_id, "entrada", dados["quantidade"], usuario)
                 acao = "inserido"
 
-            # 🔥 movimentação só fora de importação
-            if usuario != "importacao":
-                self.registrar_movimentacao(
-                    item_id,
-                    "entrada",
-                    dados["quantidade"],
-                    usuario
-                )
-
             self.conn.commit()
-
-            return {
-                "status": "ok",
-                "acao": acao,
-                "item_id": item_id
-            }
+            return {"status": "ok", "acao": acao, "item_id": item_id}
 
         except Exception as e:
-            print(f"❌ Erro ao inserir item: {e}")  # 👈 erro REAL continua aparecendo
+            return {"status": "erro", "mensagem": str(e)}
 
-            return {
-                "status": "erro",
-                "mensagem": str(e)
-            }
+    # ═══════════════════════════════════════════════════════════════════════
+    #  LISTAR
+    # ═══════════════════════════════════════════════════════════════════════
 
-    def registrar_movimentacao(self, item_id, tipo, quantidade, usuario):
-        try:
-            self.cursor.execute("""
-                INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
-                VALUES (?, ?, ?, ?)
-            """, (item_id, tipo, quantidade, usuario))
-
-        except Exception as e:
-            print("Erro ao registrar movimentação:", e)
-
-            
     def listar_itens(self):
-        resultado = self.cursor.execute("""
-            SELECT id, nome, tipo, modelo, quantidade, caixa, localizacao, slot FROM itens
+        rows = self.cursor.execute("""
+            SELECT id, nome, tipo, modelo, quantidade, caixa, localizacao, slot
+            FROM itens ORDER BY nome
         """).fetchall()
 
-        itens = []
-        for row in resultado:
-            itens.append({
-                "id": row[0],
-                "nome": row[1],
-                "tipo": row[2],
-                "modelo": row[3],
-                "quantidade": row[4],
-                "caixa": row[5],
-                "localizacao": row[6],
-                "slot": row[7]
-            })
-        return itens
+        return [
+            {"id": r[0], "nome": r[1], "tipo": r[2], "modelo": r[3],
+             "quantidade": r[4], "caixa": r[5], "localizacao": r[6], "slot": r[7]}
+            for r in rows
+        ]
 
-    def validar_dados_item(self, dados):
-        campos_obrigatorios = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
-        
-        if dados["quantidade"] > 100000:
-             raise ValueError("Quantidade absurda detectada")
+    # ═══════════════════════════════════════════════════════════════════════
+    #  ATUALIZAR
+    # ═══════════════════════════════════════════════════════════════════════
 
-        for campo in campos_obrigatorios:
-            if campo not in dados or not str(dados[campo]).strip():
-                raise ValueError(f"O campo '{campo}' é obrigatório e não pode estar vazio.")      
-        
-        quantidade = dados["quantidade"]
-        if not isinstance(quantidade, int) or quantidade < 0:
-            raise ValueError("A quantidade deve ser um número inteiro não negativo.")
-        
-        if not isinstance(quantidade, int) or quantidade < 0:
-                raise ValueError("A quantidade deve ser um número inteiro não negativo.")
-            
-        for campo in ["nome", "tipo", "modelo", "caixa", "localizacao", "slot"]:
-            if not isinstance(dados[campo], str):
-                raise ValueError(f"O campo '{campo}' deve ser uma string.")
-            
-        for campo in ["nome", "tipo", "modelo", "caixa", "localizacao", "slot"]:
-            if len(dados[campo]) > 255:
-                raise ValueError(f"O campo '{campo}' não pode exceder 255 caracteres.")
-            
-        for campo in  [";", "--", "/*", "*/"]:
-            for valor in [dados["nome"], dados["tipo"], dados["modelo"], dados["caixa"], dados["localizacao"], dados["slot"]]:
-                if campo in valor:
-                    raise ValueError(f"O campo '{valor}' contém caracteres proibidos: {campo}")   
-            
-    def item_existe(self, nome, modelo):
-        return self.cursor.execute("""
-            SELECT id, quantidade FROM itens
-            WHERE LOWER(nome) = LOWER(?) AND LOWER(modelo) = LOWER(?)
-        """, (nome, modelo)).fetchone()
-
-    def normalizar_dados(self, dados):
-        def limpar(texto):
-            return str(texto).strip().lower()
-
-        return {
-            "nome": limpar(dados.get("nome")),
-            "tipo": limpar(dados.get("tipo")),
-            "modelo": limpar(dados.get("modelo")),
-            "quantidade": int(dados.get("quantidade", 0)),
-            "caixa": limpar(dados.get("caixa")),
-            "localizacao": limpar(dados.get("localizacao")),
-            "slot": limpar(dados.get("slot")),
-        }
-
-    def controlar_duplicidade(self, nome, modelo, item_id=None):
-        query = """
-            SELECT id FROM itens
-            WHERE nome = ? AND modelo = ?
-        """
-        params = [nome, modelo]
-
-        if item_id:
-            query += " AND id != ?"
-            params.append(item_id)
-            print("Verificando duplicidade para atualização:", params)
-        else:
-            print("Verificando duplicidade para inserção:", params)
-
-        return self.cursor.execute(query, params).fetchone()
-
-    #função de update
     def atualizar_item(self, item_id, novos_dados, usuario="sistema"):
         try:
-            # verificar se item existe
             item_atual = self.cursor.execute("""
                 SELECT nome, tipo, modelo, quantidade, caixa, localizacao, slot
-                FROM itens WHERE id = ?
+                FROM itens WHERE id=?
             """, (item_id,)).fetchone()
 
             if not item_atual:
                 raise ValueError("Item não encontrado")
 
-            # montar dicionário atual
             item_dict = {
-                "nome": item_atual[0],
-                "tipo": item_atual[1],
-                "modelo": item_atual[2],
-                "quantidade": item_atual[3],
-                "caixa": item_atual[4],
-                "localizacao": item_atual[5],
-                "slot": item_atual[6]
+                "nome": item_atual[0], "tipo": item_atual[1], "modelo": item_atual[2],
+                "quantidade": item_atual[3], "caixa": item_atual[4],
+                "localizacao": item_atual[5], "slot": item_atual[6]
             }
 
-            # atualizar apenas campos enviados
+            # Guarda snapshot antes da mudança
+            snapshot_antes = dict(item_dict)
+
             item_dict.update(novos_dados)
-
-            #  validar
             self.validar_dados_item(item_dict)
-
-            #  normalizar
             item_dict = self.normalizar_dados(item_dict)
 
-            # verificar duplicidade (outro item igual)
-            existente = self.cursor.execute("""
-                SELECT id FROM itens
-                WHERE nome = ? AND modelo = ? AND id != ?
+            # Checa duplicidade (outro item com mesmo nome+modelo)
+            duplicado = self.cursor.execute("""
+                SELECT id FROM itens WHERE nome=? AND modelo=? AND id!=?
             """, (item_dict["nome"], item_dict["modelo"], item_id)).fetchone()
 
-            if existente:
+            if duplicado:
                 raise ValueError("Já existe outro item com mesmo nome e modelo")
 
-            # verificar mudança de quantidade
-            quantidade_antiga = item_atual[3]
-            quantidade_nova = item_dict["quantidade"]
-
-            diferenca = quantidade_nova - quantidade_antiga
-
-            # atualizar banco
             self.cursor.execute("""
                 UPDATE itens
-                SET nome=?, tipo=?, modelo=?, quantidade=?, caixa=?, localizacao=?, slot=?
+                SET nome=?, tipo=?, modelo=?, quantidade=?, caixa=?, localizacao=?, slot=?,
+                    atualizado_em=CURRENT_TIMESTAMP
                 WHERE id=?
             """, (
-                item_dict["nome"],
-                item_dict["tipo"],
-                item_dict["modelo"],
-                item_dict["quantidade"],
-                item_dict["caixa"],
-                item_dict["localizacao"],
-                item_dict["slot"],
-                item_id
+                item_dict["nome"], item_dict["tipo"], item_dict["modelo"],
+                item_dict["quantidade"], item_dict["caixa"],
+                item_dict["localizacao"], item_dict["slot"], item_id
             ))
 
-            #registrar movimentação se mudou quantidade
-            if diferenca != 0:
-                tipo = "entrada" if diferenca > 0 else "saida"
+            # Loga campo por campo o que mudou
+            campos = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao", "slot"]
+            for campo in campos:
+                antes = str(snapshot_antes[campo])
+                depois = str(item_dict[campo])
+                if antes != depois:
+                    self._registrar_historico(item_id, campo, antes, depois, usuario, "editado")
 
-                self.registrar_movimentacao(
-                    item_id,
-                    tipo,
-                    abs(diferenca),
-                    usuario
-                )
+            # Movimentação de quantidade
+            diff = item_dict["quantidade"] - snapshot_antes["quantidade"]
+            if diff != 0:
+                tipo_mov = "entrada" if diff > 0 else "saida"
+                self._registrar_movimentacao(item_id, tipo_mov, abs(diff), usuario)
 
-            # commit
             self.conn.commit()
-
-            return {
-                "status": "ok",
-                "mensagem": "Item atualizado com sucesso",
-                "item_id": item_id
-            }
+            return {"status": "ok", "mensagem": "Item atualizado com sucesso", "item_id": item_id}
 
         except Exception as e:
-            return {
-                "status": "erro",
-                "mensagem": str(e)
-            }
+            return {"status": "erro", "mensagem": str(e)}
 
-    #deletar item
+    # ═══════════════════════════════════════════════════════════════════════
+    #  DELETAR
+    # ═══════════════════════════════════════════════════════════════════════
+
     def deletar_item(self, item_id, usuario="sistema"):
         try:
-            # verificar se item existe
             item_atual = self.cursor.execute("""
-                SELECT quantidade FROM itens WHERE id = ?
+                SELECT nome, modelo, quantidade FROM itens WHERE id=?
             """, (item_id,)).fetchone()
 
             if not item_atual:
                 raise ValueError("Item não encontrado")
-            
-            quantidade = item_atual[0]
 
-            #Registrar saída antes de deletar 
-            if quantidade >0:
-                self.registrar_movimentacao(
-                    item_id,
-                    "saida",
-                    quantidade,
-                    usuario
-                )
+            nome, modelo, quantidade = item_atual
 
-            # deletar item
-            self.cursor.execute("""
-                DELETE FROM itens WHERE id = ?
-            """, (item_id,))
+            if quantidade > 0:
+                self._registrar_movimentacao(item_id, "saida", quantidade, usuario)
 
-            # commit
+            self._registrar_historico(
+                item_id, "*",
+                f"{nome} | {modelo} | qtd={quantidade}",
+                None, usuario, "deletado"
+            )
+
+            self.cursor.execute("DELETE FROM itens WHERE id=?", (item_id,))
             self.conn.commit()
 
-            return {
-                "status": "ok",
-                "mensagem": "Item deletado com sucesso",
-                "item_id": item_id
-            }
+            return {"status": "ok", "mensagem": "Item deletado com sucesso", "item_id": item_id}
 
         except Exception as e:
-            return {
-                "status": "erro",
-                "mensagem": str(e)
-            }
-            
-        
-    def buscar_nomes_like(self, texto):
-        query = """
-            SELECT DISTINCT nome
-            FROM itens
-            WHERE nome LIKE ?
-            LIMIT 10
+            return {"status": "erro", "mensagem": str(e)}
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  HISTÓRICO / AUDITORIA
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def listar_historico(self, item_id=None, usuario=None, acao=None, limite=200) -> list[dict]:
         """
-        return [r[0] for r in self.conn.execute(query, (f"%{texto}%",)).fetchall()]
-    
+        Retorna o histórico de alterações com filtros opcionais.
+        """
+        query = """
+            SELECT
+                h.id, h.item_id, i.nome, i.modelo,
+                h.campo, h.valor_anterior, h.valor_novo,
+                h.usuario, h.acao, h.data
+            FROM historico_alteracoes h
+            LEFT JOIN itens i ON i.id = h.item_id
+            WHERE 1=1
+        """
+        params = []
+
+        if item_id is not None:
+            query += " AND h.item_id = ?"
+            params.append(item_id)
+
+        if usuario:
+            query += " AND h.usuario = ?"
+            params.append(usuario)
+
+        if acao:
+            query += " AND h.acao = ?"
+            params.append(acao)
+
+        query += " ORDER BY h.data DESC LIMIT ?"
+        params.append(limite)
+
+        rows = self.cursor.execute(query, params).fetchall()
+
+        return [
+            {
+                "id": r[0],
+                "item_id": r[1],
+                "item_nome": r[2] or "—",
+                "item_modelo": r[3] or "—",
+                "campo": r[4],
+                "valor_anterior": r[5],
+                "valor_novo": r[6],
+                "usuario": r[7],
+                "acao": r[8],
+                "data": r[9]
+            }
+            for r in rows
+        ]
+
+    def listar_movimentacoes(self, item_id=None, tipo=None, usuario=None, limite=200) -> list[dict]:
+        """
+        Retorna movimentações (entradas/saídas de quantidade).
+        """
+        query = """
+            SELECT
+                m.id, m.item_id, i.nome, i.modelo,
+                m.tipo, m.quantidade, m.usuario, m.data
+            FROM movimentacoes m
+            LEFT JOIN itens i ON i.id = m.item_id
+            WHERE 1=1
+        """
+        params = []
+
+        if item_id is not None:
+            query += " AND m.item_id = ?"
+            params.append(item_id)
+
+        if tipo:
+            query += " AND m.tipo = ?"
+            params.append(tipo)
+
+        if usuario:
+            query += " AND m.usuario = ?"
+            params.append(usuario)
+
+        query += " ORDER BY m.data DESC LIMIT ?"
+        params.append(limite)
+
+        rows = self.cursor.execute(query, params).fetchall()
+
+        return [
+            {
+                "id": r[0],
+                "item_id": r[1],
+                "item_nome": r[2] or "—",
+                "item_modelo": r[3] or "—",
+                "tipo": r[4],
+                "quantidade": r[5],
+                "usuario": r[6],
+                "data": r[7]
+            }
+            for r in rows
+        ]
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  BUSCAS
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def buscar_item(self, texto, filtro="nome"):
+        if filtro == "nome":
+            q = "SELECT * FROM itens WHERE nome LIKE ? LIMIT 20"
+            p = (f"%{texto}%",)
+        elif filtro == "modelo":
+            q = "SELECT * FROM itens WHERE modelo LIKE ? LIMIT 20"
+            p = (f"%{texto}%",)
+        else:
+            q = "SELECT * FROM itens WHERE nome LIKE ? OR modelo LIKE ? LIMIT 20"
+            p = (f"%{texto}%", f"%{texto}%")
+
+        return self.cursor.execute(q, p).fetchall()
+
+    def buscar_por_nome(self, nome):
+        row = self.cursor.execute("""
+            SELECT nome, tipo, modelo, caixa, localizacao, slot
+            FROM itens WHERE LOWER(nome) LIKE LOWER(?) LIMIT 1
+        """, (nome + "%",)).fetchone()
+
+        if not row:
+            return None
+
+        return {"nome": row[0], "tipo": row[1], "modelo": row[2],
+                "caixa": row[3], "localizacao": row[4], "slot": row[5]}
+
     def buscar_por_nome_exato(self, nome):
-        row = self.conn.execute("""
+        row = self.cursor.execute("""
             SELECT nome, tipo, modelo, caixa, localizacao, slot
             FROM itens WHERE nome = ?
         """, (nome,)).fetchone()
@@ -332,100 +316,84 @@ class Crud:
         if not row:
             return None
 
-        return {
-            "nome": row[0],
-            "tipo": row[1],
-            "modelo": row[2],
-            "caixa": row[3],
-            "localizacao": row[4],
-            "slot": row[5],
-        }
-    
-    def atualizar_quantidade(self, nome, modelo, nova_qtd):
-        query = """
-            UPDATE itens
-            SET quantidade = ?
-            WHERE nome = ? AND modelo = ?
-        """
-        self.conn.execute(query, (nova_qtd, nome, modelo))
-        self.conn.commit()
-        
-    def buscar_item(self, texto, filtro="nome"):
-        cursor = self.conn.cursor()
+        return {"nome": row[0], "tipo": row[1], "modelo": row[2],
+                "caixa": row[3], "localizacao": row[4], "slot": row[5]}
 
-        if filtro == "nome":
-            query = "SELECT * FROM itens WHERE nome LIKE ? LIMIT 20"
-            params = (f"%{texto}%",)
+    def buscar_nomes_like(self, texto):
+        return [r[0] for r in self.cursor.execute("""
+            SELECT DISTINCT nome FROM itens WHERE nome LIKE ? LIMIT 10
+        """, (f"%{texto}%",)).fetchall()]
 
-        elif filtro == "modelo":
-            query = "SELECT * FROM itens WHERE modelo LIKE ? LIMIT 20"
-            params = (f"%{texto}%",)
-
-        elif filtro == "nome_modelo":
-            query = """
-                SELECT * FROM itens
-                WHERE nome LIKE ? OR modelo LIKE ?
-                LIMIT 20
-            """
-            params = (f"%{texto}%", f"%{texto}%")
-
-        else:
-            return []
-
-        result = cursor.execute(query, params).fetchall()
-
-        return result
-    
-    def buscar_por_nome(self, nome):
-        cursor = self.conn.cursor()
-
-        cursor.execute("""
-            SELECT nome, tipo, modelo, caixa, localizacao, slot
-            FROM itens
-            WHERE LOWER(nome) LIKE LOWER(?)
-            LIMIT 1
-        """, (nome + "%",))
-
-        row = cursor.fetchone()
-
-        if not row:
-            return None
-
-        return {
-            "nome": row[0],
-            "tipo": row[1],
-            "modelo": row[2],
-            "caixa": row[3],
-            "localizacao": row[4],
-            "slot": row[5],
-        }
-        
     def buscar_padrao_mais_comum(self, texto):
-        cursor = self.conn.cursor()
-
-        cursor.execute("""
-            SELECT 
-                tipo,
-                caixa,
-                localizacao,
-                slot,
-                COUNT(*) as freq
-            FROM itens
-            WHERE LOWER(nome) LIKE LOWER(?)
+        row = self.cursor.execute("""
+            SELECT tipo, caixa, localizacao, slot, COUNT(*) as freq
+            FROM itens WHERE LOWER(nome) LIKE LOWER(?)
             GROUP BY tipo, caixa, localizacao, slot
-            ORDER BY freq DESC
-            LIMIT 1
-        """, (f"%{texto}%",))
-
-        row = cursor.fetchone()
+            ORDER BY freq DESC LIMIT 1
+        """, (f"%{texto}%",)).fetchone()
 
         if not row:
             return None
 
+        return {"tipo": row[0], "caixa": row[1], "localizacao": row[2],
+                "slot": row[3], "frequencia": row[4]}
+
+    def atualizar_quantidade(self, nome, modelo, nova_qtd):
+        self.cursor.execute("""
+            UPDATE itens SET quantidade=?, atualizado_em=CURRENT_TIMESTAMP
+            WHERE nome=? AND modelo=?
+        """, (nova_qtd, nome, modelo))
+        self.conn.commit()
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #  HELPERS INTERNOS
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def item_existe(self, nome, modelo):
+        return self.cursor.execute("""
+            SELECT id, quantidade FROM itens WHERE nome=? AND modelo=?
+        """, (nome, modelo)).fetchone()
+
+    def _registrar_movimentacao(self, item_id, tipo, quantidade, usuario):
+        self.cursor.execute("""
+            INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
+            VALUES (?, ?, ?, ?)
+        """, (item_id, tipo, quantidade, usuario))
+
+    def _registrar_historico(self, item_id, campo, valor_anterior, valor_novo, usuario, acao):
+        self.cursor.execute("""
+            INSERT INTO historico_alteracoes
+                (item_id, campo, valor_anterior, valor_novo, usuario, acao)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (item_id, campo, valor_anterior, valor_novo, usuario, acao))
+
+    def validar_dados_item(self, dados):
+        obrigatorios = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
+        for campo in obrigatorios:
+            if campo not in dados or not str(dados[campo]).strip():
+                raise ValueError(f"Campo '{campo}' obrigatório e não pode estar vazio.")
+
+        qtd = dados["quantidade"]
+        if not isinstance(qtd, int) or qtd < 0:
+            raise ValueError("Quantidade deve ser um inteiro não negativo.")
+
+        proibidos = [";", "--", "/*", "*/"]
+        campos_texto = ["nome", "tipo", "modelo", "caixa", "localizacao", "slot"]
+        for campo in campos_texto:
+            valor = str(dados.get(campo, ""))
+            if len(valor) > 255:
+                raise ValueError(f"Campo '{campo}' não pode exceder 255 caracteres.")
+            for p in proibidos:
+                if p in valor:
+                    raise ValueError(f"Campo '{campo}' contém caractere proibido: {p}")
+
+    def normalizar_dados(self, dados):
         return {
-            "tipo": row[0],
-            "caixa": row[1],
-            "localizacao": row[2],
-            "slot": row[3],
-            "frequencia": row[4]  # opcional (útil pra debug)
+            "nome": dados.get("nome", "").strip().title(),
+            "tipo": dados.get("tipo", "").strip().title(),
+            "modelo": dados.get("modelo", "").strip().upper(),
+            "quantidade": int(dados.get("quantidade", 0)),
+            "caixa": dados.get("caixa", "").strip(),
+            "localizacao": dados.get("localizacao", "Não informado").strip().title(),
+            "slot": dados.get("slot", "").strip().upper()
         }

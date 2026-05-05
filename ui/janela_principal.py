@@ -1,64 +1,88 @@
-
-
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QAbstractItemView
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QLineEdit, QPushButton, QLabel, QMessageBox
 )
 from PyQt6.QtCore import Qt, QTimer
 
-from PyQt6.QtWidgets import QMessageBox
-
 from ui.tabela_estoque import TabelaEstoque
-from controllers.crud import Crud
-from PyQt6.QtWidgets import QLineEdit, QPushButton, QHBoxLayout, QLabel
 from ui.dialogo_inserir import DialogoInserir
-from PyQt6.QtWidgets import QPushButton
-from services.importador import importar_para_banco
-from services.importador import gerar_relatorio_inconsistencias
+from ui.tela_historico import TelaHistorico
+from controllers.crud import Crud
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        super().__init__() 
+        super().__init__()
 
         self.setWindowTitle("ARMAZENAMENTO DE COMPONENTES - LABORATÓRIO DE EMC")
-        self.resize(1000, 600)
+        self.resize(1100, 650)
 
-        # ✅ ORDEM CORRETA
         self.crud = Crud()
-
 
         container = QWidget()
         layout = QVBoxLayout()
 
-        # 🔍 BUSCA
+        # ── Busca ──────────────────────────────────────────────────────────
         self.input_busca = QLineEdit()
-        self.input_busca.setPlaceholderText("🔍 Buscar item...")
+        self.input_busca.setPlaceholderText("🔍 Buscar por nome, tipo, modelo...")
         self.input_busca.textChanged.connect(self.filtrar_tabela)
         layout.addWidget(self.input_busca)
 
-        # 📦 TABELA
+        # ── Tabela ─────────────────────────────────────────────────────────
         self.tabela = TabelaEstoque()
+        self.tabela.itemChanged.connect(self.on_item_changed)
         layout.addWidget(self.tabela)
 
-        # ➕ BOTÃO ADD
+        # ── Botões ─────────────────────────────────────────────────────────
+        botoes = QHBoxLayout()
+
         self.botao_add = QPushButton("➕ Adicionar Equipamento")
         self.botao_add.clicked.connect(self.abrir_dialogo)
-        layout.addWidget(self.botao_add)
 
-        # 🔄 RELOAD
-        self.btn_recarregar = QPushButton("🔄 Recarregar Planilha")
-        self.btn_recarregar.clicked.connect(self.recarregar_dados)
-        layout.addWidget(self.btn_recarregar)
+        self.btn_recarregar = QPushButton("🔄 Recarregar Banco")
+        self.btn_recarregar.clicked.connect(self.carregar_tabela)
+
+        self.btn_historico = QPushButton("📋 Ver Histórico")
+        self.btn_historico.clicked.connect(self.abrir_historico)
+
+        botoes.addWidget(self.botao_add)
+        botoes.addWidget(self.btn_recarregar)
+        botoes.addWidget(self.btn_historico)
+        layout.addLayout(botoes)
+
+        # ── Status ─────────────────────────────────────────────────────────
+        self.label_status = QLabel("")
+        self.label_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.label_status)
 
         container.setLayout(layout)
         self.setCentralWidget(container)
 
         self.carregar_tabela()
-        
-    def tratar_erro(self, erro):
-        print("ERRO:", erro)
-        self.mostrar_erro(str(erro))
-        
+
+    # ── Tabela ─────────────────────────────────────────────────────────────
+
+    def carregar_tabela(self):
+        itens = self.crud.listar_itens()
+        self.tabela.blockSignals(True)
+        self.tabela.carregar_dados(itens)
+        self.tabela.blockSignals(False)
+        self.label_status.setText(f"{len(itens)} itens carregados")
+
+    def filtrar_tabela(self, texto):
+        """Filtra linhas da tabela conforme o texto digitado na busca."""
+        texto = texto.strip().lower()
+        for row in range(self.tabela.rowCount()):
+            match = False
+            for col in range(self.tabela.columnCount()):
+                item = self.tabela.item(row, col)
+                if item and texto in item.text().lower():
+                    match = True
+                    break
+            self.tabela.setRowHidden(row, not match)
+
     def on_item_changed(self, item):
+        """Edição inline de célula na tabela — salva direto no banco."""
         try:
             self.tabela.blockSignals(True)
 
@@ -73,135 +97,70 @@ class MainWindow(QMainWindow):
                 return
 
             item_id = int(item_id_widget.text())
-
             colunas = ["id", "nome", "tipo", "modelo", "quantidade", "caixa", "localizacao", "slot"]
-
             campo = colunas[col]
+
+            # ID não pode ser editado
+            if campo == "id":
+                return
+
             valor = item.text().strip()
 
-            # ❌ não permitir vazio
             if not valor:
-                self.mostrar_erro(f"O campo '{campo}' não pode ser vazio")
+                self._mostrar_erro(f"O campo '{campo}' não pode estar vazio.")
                 self.carregar_tabela()
                 return
 
-            # 🔢 valida quantidade
             if campo == "quantidade":
                 if not valor.isdigit():
-                    self.mostrar_erro("Quantidade deve ser número inteiro positivo")
+                    self._mostrar_erro("Quantidade deve ser um número inteiro positivo.")
                     self.carregar_tabela()
                     return
-
                 valor = int(valor)
 
-                if valor < 0:
-                    self.mostrar_erro("Quantidade não pode ser negativa")
-                    self.carregar_tabela()
-                    return
+            resultado = self.crud.atualizar_item(item_id, {campo: valor}, usuario="andre")
 
-            dados = {campo: valor}
-
-            resultado = self.crud.atualizar_item(item_id, dados, usuario="andre")
-
-            if resultado["status"] != "ok":
-                raise ValueError(resultado["mensagem"])
-
-            item.setBackground(Qt.GlobalColor.green)
-            print(f"✅ Item {item_id} atualizado: {campo} = {valor}")  # DEBUG
-
-            # 🔄 Recarregar tabela para refletir mudanças
-            self.carregar_tabela()
+            if resultado["status"] == "ok":
+                item.setBackground(Qt.GlobalColor.green)
+                QTimer.singleShot(800, self.carregar_tabela)
+                self.label_status.setText(f"✅ Campo '{campo}' atualizado.")
+            else:
+                self._mostrar_erro(resultado["mensagem"])
+                self.carregar_tabela()
 
         except Exception as e:
-            if item:
-                item.setBackground(Qt.GlobalColor.red)
-            self.tratar_erro(e)
-
+            self._mostrar_erro(str(e))
+            self.carregar_tabela()
         finally:
             self.tabela.blockSignals(False)
-            
-    def filtrar_tabela(self, texto):
-        for row in range(self.tabela.rowCount()):
-            match = False
 
-            for col in range(self.tabela.columnCount()):
-                item = self.tabela.item(row, col)
+    # ── Diálogo de inserção ────────────────────────────────────────────────
 
-                if item:
-                    valor = item.text()
-                    match = True
-                    break
-                    
-            self.tabela.setRowHidden(row, not match)
-            
-    
     def abrir_dialogo(self):
-        print("Botão clicado!")
-
+        """Abre o dialog para adicionar um novo item ao banco."""
         dialogo = DialogoInserir(self.crud)
-
         if dialogo.exec():
             self.carregar_tabela()
-            
-    def carregar_tabela(self):
-        itens = self.crud.listar_itens()
-        self.tabela.carregar_dados(itens)   
-        
-    def recarregar_dados(self):
-        caminho = "planilhas/estoque_lab_completa.xlsx"
+            self.label_status.setText("✅ Item adicionado com sucesso.")
 
-        self.btn_recarregar.setEnabled(False)
-        self.btn_recarregar.setText("⏳ Sincronizando...")
+    # ── Histórico ──────────────────────────────────────────────────────────
 
-        from services.sincronizador import sincronizar_planilha_banco
-        sincronizar_planilha_banco(caminho)
+    def abrir_historico(self):
+        tela = TelaHistorico(self.crud)
+        tela.exec()
 
-        self.carregar_tabela()
+    # ── Mensagens ──────────────────────────────────────────────────────────
 
-        from services.importador import validar_diferencas
-        erros = validar_diferencas(caminho)
-
-        self.mostrar_inconsistencias(erros)
-
-        self.btn_recarregar.setEnabled(True)
-        self.btn_recarregar.setText("🔄 Sincronizar Planilha")
-        
-    def mostrar_erro(self, mensagem):
-        msg = QMessageBox()
+    def _mostrar_erro(self, mensagem: str):
+        msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Icon.Critical)
         msg.setWindowTitle("Erro")
-        msg.setText("Ocorreu um erro no sistema")
-        msg.setInformativeText(mensagem)
+        msg.setText(mensagem)
         msg.exec()
-        
-    def mostrar_sucesso(self, mensagem):
-        msg = QMessageBox()
+
+    def _mostrar_sucesso(self, mensagem: str):
+        msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Icon.Information)
         msg.setWindowTitle("Sucesso")
         msg.setText(mensagem)
-        msg.exec()
-        
-    def mostrar_inconsistencias(self, erros):
-        if not erros:
-            self.mostrar_sucesso("✅ Banco sincronizado com a planilha!")
-            return
-
-        texto = ""
-
-        for erro in erros[:15]:
-            texto += (
-                f"Item: {erro['nome']}\n"
-                f"Modelo: {erro['modelo']}\n"
-                f"Excel: {erro['excel']} | Banco: {erro['banco']}\n"
-                "------------------------\n"
-            )
-
-        if len(erros) > 15:
-            texto += f"\n... e mais {len(erros) - 15} inconsistências"
-
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Icon.Warning)
-        msg.setWindowTitle("Inconsistências encontradas")
-        msg.setText("⚠️ Diferenças entre planilha e banco")
-        msg.setDetailedText(texto)
         msg.exec()

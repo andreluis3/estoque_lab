@@ -1,314 +1,171 @@
 from PyQt6.QtWidgets import (
-    QCompleter, QDialog, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox
+    QDialog, QVBoxLayout, QLineEdit, QPushButton,
+    QLabel, QMessageBox, QSpinBox, QComboBox
 )
-
-from controllers import crud
-from PyQt6.QtWidgets import QSpinBox
 from PyQt6.QtCore import QStringListModel, QTimer, Qt
-from services.cache import AutocompleteCache
-from PyQt6.QtWidgets import QComboBox
-from PyQt6.QtCore import QStringListModel
+from PyQt6.QtWidgets import QCompleter
+
 
 class DialogoInserir(QDialog):
-    def __init__(self, service):
+    def __init__(self, crud):
         super().__init__()
+        self.crud = crud
+        self.setWindowTitle("➕ Adicionar Equipamento")
+        self.setMinimumWidth(400)
+        self._setup_ui()
+        self._setup_autocomplete()
+        self._setup_debounce()
+        self._setup_signals()
 
-        self.service = service
-        self.service = service
-        self.crud = service.crud
+    # ── UI ─────────────────────────────────────────────────────────────────
 
-        self.cache = AutocompleteCache()
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
 
-        self.setWindowTitle("Adicionar Equipamento")
+        self.nome       = QLineEdit(); self.nome.setPlaceholderText("Nome do componente")
+        self.tipo       = QLineEdit(); self.tipo.setPlaceholderText("Ex: Resistor, Capacitor...")
+        self.modelo     = QLineEdit(); self.modelo.setPlaceholderText("Código/modelo")
+        self.quantidade = QSpinBox();  self.quantidade.setRange(0, 100000)
+        self.caixa      = QLineEdit(); self.caixa.setPlaceholderText("Caixa onde está guardado")
+        self.localizacao= QLineEdit(); self.localizacao.setPlaceholderText("Ex: Armário, Mesa branca...")
+        self.slot       = QLineEdit(); self.slot.setPlaceholderText("Slot (opcional)")
 
-        self.setup_ui()
-        self.setup_autocomplete()
-        self.setup_debounce()
-        self.setup_signals()
+        campos = [
+            ("Nome", self.nome),
+            ("Tipo", self.tipo),
+            ("Modelo", self.modelo),
+            ("Quantidade", self.quantidade),
+            ("Caixa", self.caixa),
+            ("Localização", self.localizacao),
+            ("Slot", self.slot),
+        ]
+        for label, widget in campos:
+            layout.addWidget(QLabel(label))
+            layout.addWidget(widget)
 
-    def setup_ui(self):
-        layout = QVBoxLayout()
-
-        self.nome = QLineEdit()
-        self.tipo = QLineEdit()
-        self.modelo = QLineEdit()
-        self.quantidade = QSpinBox()
-        self.quantidade.setRange(0, 100000)
-        self.caixa = QLineEdit()
-        self.localizacao = QLineEdit()
-        self.slot = QLineEdit()
-
-        self.botao_salvar = QPushButton("Salvar")
-        self.botao_salvar.clicked.connect(self.salvar)
-
-        self.filtro_busca = QComboBox()
-        self.filtro_busca.addItems(["nome", "modelo", "nome_modelo"])
-
-        layout.addWidget(QLabel("Nome"))
-        layout.addWidget(self.nome)
-
-        layout.addWidget(QLabel("Tipo"))
-        layout.addWidget(self.tipo)
-
-        layout.addWidget(QLabel("Modelo"))
-        layout.addWidget(self.modelo)
-
-        layout.addWidget(QLabel("Quantidade"))
-        layout.addWidget(self.quantidade)
-
-        layout.addWidget(QLabel("Caixa"))
-        layout.addWidget(self.caixa)
-
-        layout.addWidget(QLabel("Localização"))
-        layout.addWidget(self.localizacao)
-
-        layout.addWidget(QLabel("Slot"))
-        layout.addWidget(self.slot)
-
-        layout.addWidget(self.filtro_busca)
+        self.botao_salvar = QPushButton("💾 Salvar")
+        self.botao_salvar.clicked.connect(self._salvar)
         layout.addWidget(self.botao_salvar)
 
-        self.setLayout(layout)
-        
-  
-
-    def setup_autocomplete(self):
-        self.model = QStringListModel()
-
+    def _setup_autocomplete(self):
+        self.model_completer = QStringListModel()
         self.completer = QCompleter()
-        self.completer.setModel(self.model)
+        self.completer.setModel(self.model_completer)
         self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
-
         self.nome.setCompleter(self.completer)
+        self.completer.activated.connect(self._ao_selecionar_nome)
 
-        self.completer.activated.connect(self.ao_selecionar_nome)
-        
-    def setup_debounce(self):
+    def _setup_debounce(self):
         self.timer = QTimer()
         self.timer.setSingleShot(True)
         self.timer.setInterval(200)
-        self.timer.timeout.connect(self.atualizar_autocomplete)
-        
-    def setup_signals(self):
+        self.timer.timeout.connect(self._atualizar_autocomplete)
+
+    def _setup_signals(self):
         self.nome.textChanged.connect(self.timer.start)
-        self.filtro_busca.currentTextChanged.connect(self.atualizar_autocomplete)
-        self.nome.textChanged.connect(self.auto_preencher_campos)
-        
-    def get_dados(self):
-        return {
-            "nome": self.nome.text(),
-            "tipo": self.tipo.text(),
-            "modelo": self.modelo.text(),
-            "quantidade": int(self.quantidade.value()),
-            "caixa": self.caixa.text(),
-            "localizacao": self.localizacao.text(),
-            "slot": self.slot.text(),
-        }
+        self.nome.textChanged.connect(self._auto_preencher)
 
-    def salvar(self):
+    # ── Lógica ─────────────────────────────────────────────────────────────
+
+    def _salvar(self):
         item = {
-            "nome": self.nome.text(),
-            "tipo": self.tipo.text(),
-            "modelo": self.modelo.text(),
+            "nome":       self.nome.text().strip(),
+            "tipo":       self.tipo.text().strip(),
+            "modelo":     self.modelo.text().strip(),
             "quantidade": int(self.quantidade.value()),
-            "caixa": self.caixa.text(),
-            "localizacao": self.localizacao.text(),
-            "slot": self.slot.text(),
+            "caixa":      self.caixa.text().strip(),
+            "localizacao":self.localizacao.text().strip() or "Não informado",
+            "slot":       self.slot.text().strip() or "Não informado",
         }
 
-        resultado = self.service.inserir_item(item)
+        # Validação básica antes de chamar o crud
+        if not item["nome"]:
+            QMessageBox.warning(self, "Atenção", "O campo Nome é obrigatório.")
+            return
+        if not item["tipo"]:
+            QMessageBox.warning(self, "Atenção", "O campo Tipo é obrigatório.")
+            return
+        if not item["caixa"]:
+            QMessageBox.warning(self, "Atenção", "O campo Caixa é obrigatório.")
+            return
+
+        resultado = self.crud.inserir_item(item, usuario="andre")
 
         if resultado["status"] == "ok":
-            QMessageBox.information(self, "Sucesso", "Item salvo!")
+            acao = resultado.get("acao", "processado")
+            msg = "Item adicionado!" if acao == "inserido" else "Quantidade atualizada no item existente."
+            QMessageBox.information(self, "Sucesso", msg)
             self.accept()
         else:
             QMessageBox.critical(self, "Erro", resultado["mensagem"])
-            
-        
-    def atualizar_autocomplete(self):
-        texto = self.nome.text().strip()
 
+    def _atualizar_autocomplete(self):
+        texto = self.nome.text().strip()
         if len(texto) < 2:
             return
 
-        filtro = self.filtro_busca.currentText()
+        resultados = self.crud.buscar_item(texto, "nome")
+        nomes = [str(r[1]) for r in resultados]  # coluna 1 = nome
+        self.model_completer.setStringList(nomes)
 
-        cache_key = f"{filtro}:{texto}"
-        cache = self.cache.get(cache_key)
-
-        if cache:
-            dados = cache
-        else:
-            dados = self.crud.buscar_item(texto, filtro)
-            self.cache.set(cache_key, dados)
-
-        nomes = []
-        
-        for item in dados:
-            if isinstance(item, dict):
-                nomes.append(item.get("nome",""))
-            else:
-                nomes.append(str(item[1]))  # nome_modelo
-
-        self.model.setStringList(nomes)
-        
-    def auto_preencher_campos(self, texto):
+    def _auto_preencher(self, texto):
+        """Preenche campos automaticamente ao digitar o nome."""
         texto = texto.strip().lower()
-
         if len(texto) < 3:
             return
 
-        item = self.service.buscar_por_nome(texto)
-        padrao = self.service.buscar_padrao_mais_comum(texto)
-        # ========================
-        # 1. SE ENCONTROU NO BANCO
-        # ========================
+        # Tenta encontrar padrão mais comum no banco
+        padrao = self.crud.buscar_padrao_mais_comum(texto)
         if padrao:
-            if not self.tipo.text():
-                self.tipo.setText(padrao.get("tipo", ""))
+            self._set_se_vazio(self.tipo,        padrao.get("tipo", ""))
+            self._set_se_vazio(self.caixa,       padrao.get("caixa", ""))
+            self._set_se_vazio(self.localizacao, padrao.get("localizacao", ""))
+            self._set_se_vazio(self.slot,        padrao.get("slot", ""))
 
-            if not self.caixa.text():
-                self.caixa.setText(padrao.get("caixa", ""))
+        # Preenchimento por palavra-chave como fallback
+        kw = {
+            "conector": ("Conector De Rf", "Maleta preta de conectores de RF", "Mesa branca"),
+            "resistor": ("Resistor",        "Caixa de resistores",              "Armário"),
+            "capacitor":("Capacitor",       "Caixa de capacitores",             "Armário"),
+            "esp32":    ("Esp32",           "Caixa microcontroladores",         "Armário"),
+            "led":      ("Led",             "Caixa dos LED",                    "Armário"),
+            "diodo":    ("Diodo",           "Caixa de diodos",                  "Armário"),
+            "transistor":("Semicondutor",   "Caixa de transistores e CI",       "Armário"),
+            "display":  ("Display",         "Caixa dos displays",               "Armário"),
+            "protoboard":("Protoboard",     "Caixa da protoboard preta",        "Armário"),
+            "sensor":   ("Módulo",          "Caixa de módulos sensores",        "Armário"),
+            "fusivel":  ("Fusível",         "Caixa de fusíveis",                "Armário"),
+            "rele":     ("Relé",            "Caixa do relé",                    "Armário"),
+        }
+        for chave, (tipo_val, caixa_val, loc_val) in kw.items():
+            if chave in texto:
+                self._set_se_vazio(self.tipo,        tipo_val)
+                self._set_se_vazio(self.caixa,       caixa_val)
+                self._set_se_vazio(self.localizacao, loc_val)
+                break
 
-            if not self.localizacao.text():
-                self.localizacao.setText(padrao.get("localizacao", ""))
-
-            if not self.slot.text():
-                self.slot.setText(padrao.get("slot", ""))
-                
-        
-    
-        if item:
-            if not self.tipo.text():
-                self.tipo.setText(item.get("tipo", ""))
-
-            if not self.caixa.text():
-                self.caixa.setText(item.get("caixa", ""))
-
-            if not self.localizacao.text():
-                self.localizacao.setText(item.get("localizacao", ""))
-
-            if not self.slot.text():
-                self.slot.setText(item.get("slot", ""))
-
-        def set_if_empty(field, value):
-            if not field.text():
-                field.setText(value)
-
-        if "conector" in texto or "rf" in texto:
-            set_if_empty(self.tipo, "Conector de RF")
-            set_if_empty(self.caixa, "Maleta preta de conectores de RF")
-            set_if_empty(self.localizacao, "Mesa branca")
-
-        elif "resistor" in texto:
-            set_if_empty(self.tipo, "Resistor")
-            set_if_empty(self.caixa, "Caixa de resistores")
-            set_if_empty(self.localizacao, "Armário")
-
-        elif "esp32" in texto:
-            set_if_empty(self.tipo, "ESP32")
-            set_if_empty(self.caixa, "Caixa microcontroladores")
-            set_if_empty(self.localizacao, "Armário")
-            set_if_empty(self.slot, "ESP32")
-
-        elif "capacitor" in texto:
-            set_if_empty(self.tipo, "Capacitor")
-            set_if_empty(self.caixa, "Caixa de capacitores")
-            set_if_empty(self.localizacao, "Armário")
-
-        elif "relé" in texto or "rele" in texto:
-            set_if_empty(self.tipo, "Relé")
-            set_if_empty(self.caixa, "Caixa do relé")
-            set_if_empty(self.localizacao, "Armário")
-
-        elif "led" in texto:
-            set_if_empty(self.tipo, "LED")
-            set_if_empty(self.caixa, "Caixa dos LED")
-            set_if_empty(self.localizacao, "Armário")
-
-        elif "diodo" in texto:
-            set_if_empty(self.tipo, "Diodo")
-            set_if_empty(self.caixa, "Caixa de diodos")
-            set_if_empty(self.localizacao, "Armário")
-
-
-        elif "transistor" in texto or "ci" in texto:
-            set_if_empty(self.tipo, "Semicondutor")
-            set_if_empty(self.caixa, "Caixa de transistores e CI")
-            set_if_empty(self.localizacao, "Armário")
-
-        elif "display" in texto:
-            set_if_empty(self.tipo, "Display")
-            set_if_empty(self.caixa, "Caixa dos displays")
-            set_if_empty(self.localizacao, "Armário")
-
-
-        elif "protoboard" in texto:
-            set_if_empty(self.tipo, "Protoboard")
-            set_if_empty(self.caixa, "Caixa da protoboard preta")
-            set_if_empty(self.localizacao, "Armário")
-
-    
-        elif "modulo" in texto or "sensor" in texto:
-            set_if_empty(self.tipo, "Módulo")
-            set_if_empty(self.caixa, "Caixa de módulos sensores")
-            set_if_empty(self.localizacao, "Armário")
-
-        elif "fusivel" in texto:
-            set_if_empty(self.tipo, "Fusível")
-            set_if_empty(self.caixa, "Caixa de fusíveis")
-            set_if_empty(self.localizacao, "Armário")
-            
-    
-    def event_filter(self, obj, event):
-        if obj == self.nome and event.type() == event.Type.KeyPress:
-            if event.key() == Qt.Key.Key_Tab:
-                self.completer.complete()
-                return True
-        return super().eventFilter(obj, event)
-    
-    def ao_selecionar_nome(self, nome):
-        item = self.service.buscar_por_nome(nome)
-
+    def _ao_selecionar_nome(self, nome):
+        """Chamado quando usuário seleciona sugestão do autocomplete."""
+        item = self.crud.buscar_por_nome(nome)
         if not item:
             return
-
-        # 🔥 preenchimento automático
         self.nome.setText(item["nome"])
         self.tipo.setText(item["tipo"])
         self.caixa.setText(item["caixa"])
         self.localizacao.setText(item["localizacao"])
         self.slot.setText(item["slot"])
 
-        # 🚀 deixar só esses editáveis
-        self.tipo.setEnabled(False)
-        self.caixa.setEnabled(False)
-        self.localizacao.setEnabled(False)
-        self.slot.setEnabled(False)
-        
-    def on_nome_changed(self, text):
-        if text.strip() == "":
-            self.limpar_campos()
-            
-    def limpar_campos(self):
-        self.tipo.clear()
-        self.modelo.clear()
-        self.caixa.clear()
-        self.localizacao.clear()
-        self.slot.clear()
+        # Bloqueia campos preenchidos automaticamente
+        for campo in [self.tipo, self.caixa, self.localizacao, self.slot]:
+            campo.setEnabled(False)
 
-        self.tipo.setEnabled(True)
-        self.caixa.setEnabled(True)
-        self.localizacao.setEnabled(True)
-        self.slot.setEnabled(True)
-        
+    def _set_se_vazio(self, field: QLineEdit, value: str):
+        if not field.text().strip():
+            field.setText(value)
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Tab:
             self.completer.complete()
             return
-
         super().keyPressEvent(event)
-                    
-
-           
