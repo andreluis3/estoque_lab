@@ -10,6 +10,7 @@ from ui.tela_historico import TelaHistorico
 from controllers.crud import Crud
 from services.authenticator import autenticar
 from services.log_service import registrar_log
+from PyQt6.QtWidgets import QInputDialog
 
 
 class MainWindow(QMainWindow):
@@ -34,6 +35,7 @@ class MainWindow(QMainWindow):
     def filtrar_tabela(self, texto):
         """Filtra linhas da tabela conforme o texto digitado na busca."""
         texto = texto.strip().lower()
+        print("FILTRANDO:", texto)
         for row in range(self.tabela.rowCount()):
             match = False
             for col in range(self.tabela.columnCount()):
@@ -157,6 +159,11 @@ class MainWindow(QMainWindow):
 
         self.btn_historico = QPushButton("📋 Ver Histórico")
         self.btn_historico.clicked.connect(self.abrir_historico)
+        
+        self.btn_retirar = QPushButton("➖ Retirar Item")
+        self.btn_retirar.clicked.connect(self.retirar_item)
+
+        botoes.addWidget(self.btn_retirar)
 
         botoes.addWidget(self.botao_add)
         botoes.addWidget(self.btn_recarregar)
@@ -220,3 +227,52 @@ class MainWindow(QMainWindow):
 
         self.widget_login.setLayout(layout)
         self.setCentralWidget(self.widget_login)
+        
+    def retirar_item(self):
+        row = self.tabela.currentRow()
+
+        if row < 0:
+            self._mostrar_erro("Selecione um item primeiro")
+            return
+
+        item_id_widget = self.tabela.item(row, 0)
+        nome_widget = self.tabela.item(row, 1)
+
+        if item_id_widget is None or nome_widget is None:
+            self._mostrar_erro("Erro ao acessar item da tabela")
+            return
+
+        item_id = int(item_id_widget.text())
+        nome = nome_widget.text()
+
+        qtd, ok = QInputDialog.getInt(self, "Quantidade", f"Quantidade para retirar de {nome}:")
+
+        if not ok or qtd <= 0:
+            return
+
+        motivo, ok = QInputDialog.getText(self, "Motivo", "Descreva o motivo da retirada:")
+
+        if not ok or not motivo.strip():
+            self._mostrar_erro("Motivo é obrigatório")
+            return
+
+        if not self.usuario_logado:
+            self._mostrar_erro("Usuário não identificado. Faça login novamente.")
+            return
+
+        usuario = self.usuario_logado
+
+        resultado = self.crud.retirar_item(
+            item_id,
+            qtd,
+            usuario,
+            motivo)
+
+
+        if resultado["status"] == "ok":
+            self.carregar_tabela()
+            self.label_status.setText("✅ Item retirado com sucesso")
+        else:
+            self._mostrar_erro(resultado["mensagem"])
+            
+        

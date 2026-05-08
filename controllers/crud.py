@@ -9,14 +9,11 @@ Toda inserção, atualização e exclusão é registrada em:
 from database.db import conectar_db
 from services.log_service import registrar_log
 
+
 class Crud:
     def __init__(self):
         self.conn = conectar_db()
         self.cursor = self.conn.cursor()
-
-    # ═══════════════════════════════════════════════════════════════════════
-    #  INSERIR
-    # ═══════════════════════════════════════════════════════════════════════
 
     def inserir_item(self, dados, usuario="sistema"):
         try:
@@ -409,3 +406,51 @@ class Crud:
             "localizacao": dados.get("localizacao", "Não informado").strip().title(),
             "slot": dados.get("slot", "").strip().upper()
         }
+        
+    def retirar_item(self, item_id: int, quantidade: int, usuario: str, motivo: str):
+        conn = conectar_db()
+        cursor = conn.cursor()
+
+        item = cursor.execute(
+            "SELECT nome, modelo, quantidade FROM itens WHERE id=?",
+            (item_id,)
+        ).fetchone()
+
+        if not item:
+            return {"status": "erro", "mensagem": "Item não encontrado"}
+
+        nome, modelo, qtd_atual = item
+
+        if quantidade > qtd_atual:
+            return {"status": "erro", "mensagem": "Quantidade insuficiente"}
+
+        nova_qtd = qtd_atual - quantidade
+
+        # atualiza estoque
+        cursor.execute("""
+            UPDATE itens
+            SET quantidade=?, atualizado_em=CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (nova_qtd, item_id))
+
+        # movimentação
+        cursor.execute("""
+            INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
+            VALUES (?, 'saida', ?, ?)
+        """, (item_id, quantidade, usuario))
+
+        # histórico detalhado
+        descricao = f"{usuario} retirou {quantidade}x {nome} ({modelo}) | Motivo: {motivo}"
+
+        cursor.execute("""
+            INSERT INTO historico_alteracoes (item_id, campo, valor_anterior, valor_novo, usuario, acao)
+            VALUES (?, 'quantidade', ?, ?, ?, 'retirada')
+        """, (item_id, qtd_atual, nova_qtd, usuario))
+
+        conn.commit()
+        conn.close()
+
+        # log arquivo
+        registrar_log(usuario, "RETIRADA", descricao)
+
+        return {"status": "ok"}
