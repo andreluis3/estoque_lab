@@ -1,15 +1,16 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLineEdit, QPushButton,
-    QLabel, QMessageBox, QSpinBox, QComboBox
+    QLabel, QMessageBox, QSpinBox
 )
 from PyQt6.QtCore import QStringListModel, QTimer, Qt
 from PyQt6.QtWidgets import QCompleter
-from regras_dominio.item_rules import ItemRules
 
 class DialogoInserir(QDialog):
-    def __init__(self, crud):
+    def __init__(self, estoque_service):
         super().__init__()
-        self.crud = crud
+        # Agora a UI recebe e conhece APENAS o service orchestrator
+        self.estoque_service = estoque_service
+        
         self.setWindowTitle("➕ Adicionar Equipamento")
         self.setMinimumWidth(400)
         self._setup_ui()
@@ -17,18 +18,18 @@ class DialogoInserir(QDialog):
         self._setup_debounce()
         self._setup_signals()
 
-    # ── UI ─────────────────────────────────────────────────────────────────
+    # ── UI LAYOUT (Responsabilidade Única: Renderizar) ─────────────────────
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
 
-        self.nome       = QLineEdit(); self.nome.setPlaceholderText("Nome do componente")
-        self.tipo       = QLineEdit(); self.tipo.setPlaceholderText("Ex: Resistor, Capacitor...")
-        self.modelo     = QLineEdit(); self.modelo.setPlaceholderText("Código/modelo")
-        self.quantidade = QSpinBox();  self.quantidade.setRange(0, 100000)
-        self.caixa      = QLineEdit(); self.caixa.setPlaceholderText("Caixa onde está guardado")
-        self.localizacao= QLineEdit(); self.localizacao.setPlaceholderText("Ex: Armário, Mesa branca...")
-        self.slot       = QLineEdit(); self.slot.setPlaceholderText("Slot (opcional)")
+        self.nome         = QLineEdit(); self.nome.setPlaceholderText("Nome do componente")
+        self.tipo         = QLineEdit(); self.tipo.setPlaceholderText("Ex: Resistor, Capacitor...")
+        self.modelo       = QLineEdit(); self.modelo.setPlaceholderText("Código/modelo")
+        self.quantidade   = QSpinBox();  self.quantidade.setRange(0, 100000)
+        self.caixa        = QLineEdit(); self.caixa.setPlaceholderText("Caixa onde está guardado")
+        self.localizacao  = QLineEdit(); self.localizacao.setPlaceholderText("Ex: Armário, Mesa branca...")
+        self.slot         = QLineEdit(); self.slot.setPlaceholderText("Slot (opcional)")
 
         campos = [
             ("Nome", self.nome),
@@ -66,99 +67,78 @@ class DialogoInserir(QDialog):
         self.nome.textChanged.connect(self.timer.start)
         self.nome.textChanged.connect(self._auto_preencher)
 
-    # ── Lógica ─────────────────────────────────────────────────────────────
+    # ── CAPTURA E FLUXO (UI Pura) ──────────────────────────────────────────
 
-    def _salvar(self):
-        item = {
-            "nome":       self.nome.text().strip(),
-            "tipo":       self.tipo.text().strip(),
-            "modelo":     self.modelo.text().strip(),
-            "quantidade": int(self.quantidade.value()),
-            "caixa":      self.caixa.text().strip(),
-            "localizacao":self.localizacao.text().strip() or "Não informado",
-            "slot":       self.slot.text().strip() or "Não informado",
+    def _coletar_dados(self) -> dict:
+        """[CHECKLIST] Extrai os dados crus digitados na tela em formato de dicionário."""
+        return {
+            "nome":        self.nome.text(),
+            "tipo":        self.tipo.text(),
+            "modelo":      self.modelo.text(),
+            "quantidade":  int(self.quantidade.value()),
+            "caixa":       self.caixa.text(),
+            "localizacao": self.localizacao.text(),
+            "slot":        self.slot.text(),
         }
 
-        # Validação básica antes de chamar o crud
-        if not item["nome"]:
-            QMessageBox.warning(self, "Atenção", "O campo Nome é obrigatório.")
-            return
-        if not item["tipo"]:
-            QMessageBox.warning(self, "Atenção", "O campo Tipo é obrigatório.")
-            return
-        if not item["caixa"]:
-            QMessageBox.warning(self, "Atenção", "O campo Caixa é obrigatório.")
-            return
+    def _salvar(self):
+        # Captura os dados brutos usando a função centralizada
+        dados_item = self._coletar_dados()
 
-        resultado = self.crud.inserir_item(item, usuario="andre")
-
-        if resultado["status"] == "ok":
-            acao = resultado.get("acao", "processado")
-            msg = "Item adicionado!" if acao == "inserido" else "Quantidade atualizada no item existente."
+        try:
+            # Envia para a camada de serviço processar tudo.
+            # O usuário "andre" pode ser dinâmico depois.
+            resultado = self.estoque_service.registrar_item(dados_item, usuario="andre")
+            
+            if resultado.get("acao") == "atualizado":
+                msg = "Quantidade acumulada e atualizada no item existente!"
+            else:
+                msg = "Novo item inserido com sucesso no estoque!"
+                
             QMessageBox.information(self, "Sucesso", msg)
             self.accept()
-        else:
-            QMessageBox.critical(self, "Erro", resultado["mensagem"])
+
+        except ValueError as e:
+            # Captura erros de validação disparados pelo service/validador externo
+            QMessageBox.warning(self, "Aviso de Validação", str(e))
+        except Exception as e:
+            # Qualquer outra falha de banco ou sistema
+            QMessageBox.critical(self, "Erro Operacional", f"Falha ao salvar: {str(e)}")
 
     def _atualizar_autocomplete(self):
         texto = self.nome.text().strip()
         if len(texto) < 2:
             return
 
-        resultados = self.crud.buscar_item(texto, "nome")
-        nomes = [str(r[1]) for r in resultados]  # coluna 1 = nome
+        # Busca delegada ao serviço
+        nomes = self.estoque_service.obter_sugestoes_por_termo(texto)
         self.model_completer.setStringList(nomes)
 
     def _auto_preencher(self, texto):
-
-        texto = texto.strip()
-
-        if len(texto) < 3:
+        if len(texto.strip()) < 3:
             return
 
-        item = {
-            "nome": texto
-        }
+        # Pede a previsão de atributos ao serviço (que consulta o ItemRules internamente)
+        sugestao = self.estoque_service.prever_atributos_por_nome(texto)
 
-        sugestao = ItemRules.aplicar_regras(item)
+        self._set_se_vazio(self.tipo, sugestao.get("tipo", ""))
+        self._set_se_vazio(self.caixa, sugestao.get("caixa", ""))
+        self._set_se_vazio(self.localizacao, sugestao.get("localizacao", ""))
+        self._set_se_vazio(self.slot, sugestao.get("slot", ""))
 
-        self._set_se_vazio(
-            self.tipo,
-            sugestao.get("tipo", "")
-        )
-
-        self._set_se_vazio(
-            self.caixa,
-            sugestao.get("caixa", "")
-        )
-
-        self._set_se_vazio(
-            self.localizacao,
-            sugestao.get("localizacao", "")
-        )
-
-        self._set_se_vazio(
-            self.slot,
-            sugestao.get("slot", "")
-        )
-
-        # =====================================================
-        # AUTOPREENCHIMENTO POR PALAVRA-CHAVE
-        # =====================================================
-
-        
     def _ao_selecionar_nome(self, nome):
-        """Chamado quando usuário seleciona sugestão do autocomplete."""
-        item = self.crud.buscar_por_nome(nome)
+        """Preenche o formulário se o item já existir no histórico do banco."""
+        item = self.estoque_service.buscar_detalhes_por_nome(nome)
         if not item:
             return
-        self.nome.setText(item["nome"])
-        self.tipo.setText(item["tipo"])
-        self.caixa.setText(item["caixa"])
-        self.localizacao.setText(item["localizacao"])
-        self.slot.setText(item["slot"])
+            
+        self.nome.setText(item.get("nome", ""))
+        self.tipo.setText(item.get("tipo", ""))
+        self.caixa.setText(item.get("caixa", ""))
+        self.localizacao.setText(item.get("localizacao", ""))
+        self.slot.setText(item.get("slot", ""))
 
-        # Bloqueia campos preenchidos automaticamente
+        # Trava os campos estruturais para manter a consistência do item original
         for campo in [self.tipo, self.caixa, self.localizacao, self.slot]:
             campo.setEnabled(False)
 

@@ -1,28 +1,35 @@
 import sys
 from PyQt6.QtWidgets import QApplication
 
+from database.db import criar_tabela, conectar_db
 from database.backup import criar_backup
-from database.db import criar_tabela
+from services.estoque_service import EstoqueService
 from ui.janela_principal import MainWindow
-from database.backup import criar_backup
 
 
 def main():
-    print("Iniciando aplicação...")
+    print("Iniciando aplicação Estoque Lab...")
 
-    criar_tabela()  # garante que as tabelas existem antes de qualquer coisa
+    # 1. Garante tabelas estruturadas e executa o backup preventivo
+    criar_tabela()
+    try:
+        criar_backup()
+        print("-> Backup preventivo inicializado com sucesso.")
+    except Exception as e:
+        print(f"-> Aviso: Não foi possível realizar o backup inicial: {e}")
 
     app = QApplication(sys.argv)
 
-    window = MainWindow()  # MainWindow já cria o Crud e carrega a tabela internamente
+    # 2. Inicia conexão única do Banco e injeta na camada de Serviço
+    conexao_db = conectar_db()
+    estoque_service = EstoqueService(conn=conexao_db)
+
+    # 3. Passa o serviço central para a janela inicial
+    window = MainWindow(estoque_service=estoque_service)
     window.show()
 
     sys.exit(app.exec())
+
+
 if __name__ == "__main__":
     main()
-    criar_backup()
-    
-    #Falta colocar os conectores
-    #Voce parou em Conector I femea x femea
-    
-    

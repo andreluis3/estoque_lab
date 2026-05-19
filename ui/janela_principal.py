@@ -1,51 +1,69 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLineEdit, QPushButton, QLabel, QMessageBox
+    QLineEdit, QPushButton, QLabel, QMessageBox, QInputDialog
 )
 from PyQt6.QtCore import Qt, QTimer
 
 from ui.tabela_estoque import TabelaEstoque
 from ui.dialogo_inserir import DialogoInserir
 from ui.tela_historico import TelaHistorico
-from controllers.crud import Crud
 from services.authenticator import autenticar
 from services.log_service import registrar_log
-from PyQt6.QtWidgets import QInputDialog
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, estoque_service):  # <- Agora recebe corretamente o serviço injetado pelo main.py
         super().__init__()
 
         self.usuario_logado = None
-        self.crud = Crud()
+        # ENGENHARIA ARQUITETURAL: Salvamos o centralizador de serviços na janela principal
+        self.estoque_service = estoque_service
 
         # Inicia com tela de login
         self.criar_tela_login()
 
-    # ── Tabela ─────────────────────────────────────────────────────────────
+    # ── Tabela (Usando as regras e métodos do Service) ──────────────────────
 
     def carregar_tabela(self):
-        itens = self.crud.listar_itens()
+        self.itens_completos = self.estoque_service.listar_todos_itens()
+        
         self.tabela.blockSignals(True)
-        self.tabela.carregar_dados(itens)
+        self.tabela.carregar_dados(self.itens_completos)
         self.tabela.blockSignals(False)
-        self.label_status.setText(f"{len(itens)} itens carregados")
+        self.label_status.setText(f"{len(self.itens_completos)} itens carregados")
 
     def filtrar_tabela(self, texto):
-        """Filtra linhas da tabela conforme o texto digitado na busca."""
         texto = texto.strip().lower()
-        for row in range(self.tabela.rowCount()):
-            match = False
-            for col in range(self.tabela.columnCount()):
-                item = self.tabela.item(row, col)
-                if item and texto in item.text().lower():
-                    match = True
-                    break
-            self.tabela.setRowHidden(row, not match)
+        
+        # Se o campo de busca for limpo, recarrega todos os itens originais
+        if not texto:
+            self.tabela.blockSignals(True)
+            self.tabela.carregar_dados(self.itens_completos)
+            self.tabela.blockSignals(False)
+            self.label_status.setText(f"{len(self.itens_completos)} itens carregados")
+            return
+
+        # Filtra a lista de dicionários na memória de forma ultra rápida e segura
+        itens_filtrados = []
+        for item in self.itens_completos:
+            nome = str(item.get("nome", "")).lower()
+            tipo = str(item.get("tipo", "")).lower()
+            modelo = str(item.get("modelo", "")).lower()
+            caixa = str(item.get("caixa", "")).lower()
+            localizacao = str(item.get("localizacao", "")).lower()
+
+            # Se o texto coincidir com qualquer um destes campos, mantém o item
+            if (texto in nome) or (texto in tipo) or (texto in modelo) or (texto in caixa) or (texto in localizacao):
+                itens_filtrados.append(item)
+
+        # Atualiza a tabela apenas com os resultados correspondentes
+        self.tabela.blockSignals(True)
+        self.tabela.carregar_dados(itens_filtrados)
+        self.tabela.blockSignals(False)
+        self.label_status.setText(f"{len(itens_filtrados)} itens encontrados para a busca")
 
     def on_item_changed(self, item):
-        """Edição inline de célula na tabela — salva direto no banco."""
+        """Edição inline de célula na tabela — envia para validação e persistência do Service."""
         try:
             self.tabela.blockSignals(True)
 
@@ -69,6 +87,8 @@ class MainWindow(QMainWindow):
 
             valor = item.text().strip()
 
+            # Deixamos a validação de tipo e consistência básica no fluxo rápido da UI,
+            # mas o EstoqueService também revalida tudo por baixo dos panos.
             if not valor:
                 self._mostrar_erro(f"O campo '{campo}' não pode estar vazio.")
                 self.carregar_tabela()
@@ -81,7 +101,9 @@ class MainWindow(QMainWindow):
                     return
                 valor = int(valor)
 
-            resultado = self.crud.atualizar_item(item_id, {campo: valor}, usuario=self.usuario_logado or "sistema")
+            # Chama a inteligência enterprise do EstoqueService em vez do CRUD direto
+            usuario = self.usuario_logado or "sistema"
+            resultado = self.estoque_service.atualizar_item(item_id, {campo: valor}, usuario=usuario)
 
             if resultado["status"] == "ok":
                 item.setBackground(Qt.GlobalColor.green)
@@ -100,8 +122,30 @@ class MainWindow(QMainWindow):
     # ── Diálogo de inserção ────────────────────────────────────────────────
 
     def abrir_dialogo(self):
-        """Abre o dialog para adicionar um novo item ao banco."""
-        dialogo = DialogoInserir(self.crud)
+        """Abre o dialog para adicionar um novo item passando o orquestrador de serviço."""
+        # Passa o estoque_service que está na janela principal direto para o diálogo
+        dialogo = DialogoInserir(estoque_service=self.estoque_service)
+        
+        # Fazemos um pequeno ajuste dinâmico: injetamos o usuário ativo no diálogo antes de abrir
+        # para que o log registre quem realmente salvou o componente no lab
+        if self.usuario_logado:
+            def _salvar_com_usuario_real():
+                dados_item = dialogo._coletar_dados()
+                try:
+                    resultado = dialogo.estoque_service.registrar_item(dados_item, usuario=self.usuario_logado)
+                    if resultado.get("acao") == "atualizado":
+                        msg = "Quantidade acumulada e atualizada no item existente!"
+                    else:
+                        msg = "Novo item inserido com sucesso no estoque!"
+                    QMessageBox.information(dialogo, "Sucesso", msg)
+                    dialogo.accept()
+                except ValueError as e:
+                    QMessageBox.warning(dialogo, "Aviso de Validação", str(e))
+                except Exception as e:
+                    QMessageBox.critical(dialogo, "Erro Operacional", f"Falha ao salvar: {str(e)}")
+            dialogo.botao_salvar.disconnect()
+            dialogo.botao_salvar.clicked.connect(_salvar_com_usuario_real)
+
         if dialogo.exec():
             self.carregar_tabela()
             self.label_status.setText("✅ Item adicionado com sucesso.")
@@ -109,7 +153,9 @@ class MainWindow(QMainWindow):
     # ── Histórico ──────────────────────────────────────────────────────────
 
     def abrir_historico(self):
-        tela = TelaHistorico(self.crud)
+        # Caso sua TelaHistorico precise se adaptar depois, ela também usará a conexão/service.
+        # Temporariamente passamos o service adaptado se necessário.
+        tela = TelaHistorico(self.estoque_service)
         tela.exec()
 
     # ── Mensagens ──────────────────────────────────────────────────────────
@@ -127,6 +173,8 @@ class MainWindow(QMainWindow):
         msg.setWindowTitle("Sucesso")
         msg.setText(mensagem)
         msg.exec()
+
+    # ── Construção de Telas e Fluxos ───────────────────────────────────────
 
     def mostrar_sistema_principal(self):
         """Cria e mostra a interface principal do sistema após login."""
@@ -163,7 +211,6 @@ class MainWindow(QMainWindow):
         self.btn_retirar.clicked.connect(self.retirar_item)
 
         botoes.addWidget(self.btn_retirar)
-
         botoes.addWidget(self.botao_add)
         botoes.addWidget(self.btn_recarregar)
         botoes.addWidget(self.btn_historico)
@@ -266,17 +313,34 @@ class MainWindow(QMainWindow):
 
         usuario = self.usuario_logado
 
-        resultado = self.crud.retirar_item(
-            item_id,
-            qtd,
-            usuario,
-            motivo)
-
+        # REGRA REVOLUCIONADA: Em vez de acessar o arquivo bruto de CRUD, o estoque_service 
+        # intercepta, verifica a quantidade restante e debita usando a transação isolada!
+        try:
+            # Como ainda não havíamos migrado o 'retirar_item' para o service na resposta anterior,
+            # adicionei dinamicamente um fallback seguro para você não perder a funcionalidade.
+            if hasattr(self.estoque_service, 'retirar_item'):
+                resultado = self.estoque_service.retirar_item(item_id, qtd, usuario, motivo)
+            else:
+                # Caso o seu service queira ler direto do repo_item:
+                # Buscamos a quantidade atual usando a conexão ativa
+                r = self.estoque_service.item_repo.buscar_por_id(item_id)
+                if not r:
+                    resultado = {"status": "erro", "mensagem": "Item não encontrado"}
+                elif qtd > r[3]: # r[3] é a quantidade atual no banco
+                    resultado = {"status": "erro", "mensagem": "Quantidade insuficiente"}
+                else:
+                    nova_qtd = r[3] - qtd
+                    self.estoque_service.item_repo.atualizar_quantidade(item_id, nova_qtd)
+                    self.estoque_service.mov_repo.registrar(item_id, "saida", qtd, usuario)
+                    self.estoque_service.hist_repo.registrar(item_id, "quantidade", str(r[3]), str(nova_qtd), usuario, "retirada")
+                    registrar_log(usuario, "RETIRADA", f"{usuario} retirou {qtd}x {r[0]} | Motivo: {motivo}")
+                    self.estoque_service.conn.commit()
+                    resultado = {"status": "ok"}
+        except Exception as e:
+            resultado = {"status": "erro", "mensagem": str(e)}
 
         if resultado["status"] == "ok":
             self.carregar_tabela()
             self.label_status.setText("✅ Item retirado com sucesso")
         else:
             self._mostrar_erro(resultado["mensagem"])
-            
-        

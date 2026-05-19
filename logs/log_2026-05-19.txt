@@ -6,3 +6,8 @@
 [2026-05-19 11:21:43] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
 [2026-05-19 11:24:38] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
 [2026-05-19 11:27:45] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:31:52] | USER: 190526 | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:37:32] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:40:52] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:41:40] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:44:05] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
