@@ -35,7 +35,6 @@ class MainWindow(QMainWindow):
     def filtrar_tabela(self, texto):
         """Filtra linhas da tabela conforme o texto digitado na busca."""
         texto = texto.strip().lower()
-        print("FILTRANDO:", texto)
         for row in range(self.tabela.rowCount()):
             match = False
             for col in range(self.tabela.columnCount()):
@@ -210,7 +209,7 @@ class MainWindow(QMainWindow):
         self.label_login_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.label_login_status)
 
-        # Ação do botão
+        # Ação do login
         def fazer_login():
             usuario = self.input_usuario.text().strip().lower()
             senha = self.input_senha.text().strip()
@@ -219,11 +218,16 @@ class MainWindow(QMainWindow):
                 self.usuario_logado = usuario
                 self.label_login_status.setText("✅ Login realizado com sucesso")
                 registrar_log(usuario, "LOGIN", "Usuário entrou no sistema")
-                self.mostrar_sistema_principal()  # 🔥 entra no sistema
+                self.mostrar_sistema_principal()
             else:
                 self.label_login_status.setText("❌ Usuário ou senha inválidos")
 
+        # Clique do botão
         botao_login.clicked.connect(fazer_login)
+
+        # ENTER nos campos
+        self.input_usuario.returnPressed.connect(fazer_login)
+        self.input_senha.returnPressed.connect(fazer_login)
 
         self.widget_login.setLayout(layout)
         self.setCentralWidget(self.widget_login)

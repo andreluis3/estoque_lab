@@ -1,0 +1,3 @@
+[2026-05-12 08:12:17] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-12 08:13:30] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=268 | qtd=2
+[2026-05-12 08:13:30] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N 90º Macho X Fêmea | N 90º MACHO X FÊMEA | qtd=2

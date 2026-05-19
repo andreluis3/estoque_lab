@@ -53,11 +53,10 @@ def sincronizar_planilha_banco(caminho_excel):
 
             # 🔥 só atualiza se realmente mudou
             if item_excel["quantidade"] != item_banco["quantidade"]:
-                crud.atualizar_quantidade(
-                    item_banco["nome"],
-                    item_banco["modelo"],
-                    item_excel["quantidade"]   # ✔ corrigido aqui
-                )
+               crud.atualizar_quantidade(
+                item_banco["id"],
+                item_excel["quantidade"]
+            )
 
         else:
             crud.inserir_item(item_excel, usuario="auto_sync")

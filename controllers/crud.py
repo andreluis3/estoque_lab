@@ -8,6 +8,7 @@ Toda inserção, atualização e exclusão é registrada em:
 
 from database.db import conectar_db
 from services.log_service import registrar_log
+import sqlite3
 
 
 class Crud:
@@ -65,6 +66,11 @@ class Crud:
             registrar_log(usuario, log_acao, detalhe)
             self.conn.commit()
             return {"status": "ok", "acao": acao, "item_id": item_id}
+        except sqlite3.IntegrityError as e:
+            return {
+                "status": "erro",
+                "mensagem": "Item duplicado detectado."
+            }
 
         except Exception as e:
             return {"status": "erro", "mensagem": str(e)}
@@ -114,8 +120,8 @@ class Crud:
 
             # Checa duplicidade (outro item com mesmo nome+modelo)
             duplicado = self.cursor.execute("""
-                SELECT id FROM itens WHERE nome=? AND modelo=? AND id!=?
-            """, (item_dict["nome"], item_dict["modelo"], item_id)).fetchone()
+                SELECT id FROM itens WHERE id!=?
+            """, (item_id,)).fetchone()
 
             if duplicado:
                 raise ValueError("Já existe outro item com mesmo nome e modelo")
@@ -287,15 +293,34 @@ class Crud:
     # ═══════════════════════════════════════════════════════════════════════
 
     def buscar_item(self, texto, filtro="nome"):
+        texto = f"%{texto}%"
+
         if filtro == "nome":
-            q = "SELECT * FROM itens WHERE nome LIKE ? LIMIT 20"
-            p = (f"%{texto}%",)
+            q = """
+                SELECT * FROM itens
+                WHERE nome LIKE ?
+                ORDER BY id ASC
+                LIMIT 20
+            """
+            p = (texto,)
+
         elif filtro == "modelo":
-            q = "SELECT * FROM itens WHERE modelo LIKE ? LIMIT 20"
-            p = (f"%{texto}%",)
+            q = """
+                SELECT * FROM itens
+                WHERE modelo LIKE ?
+                ORDER BY id ASC
+                LIMIT 20
+            """
+            p = (texto,)
+
         else:
-            q = "SELECT * FROM itens WHERE nome LIKE ? OR modelo LIKE ? LIMIT 20"
-            p = (f"%{texto}%", f"%{texto}%")
+            q = """
+                SELECT * FROM itens
+                WHERE nome LIKE ? OR modelo LIKE ?
+                ORDER BY id ASC
+                LIMIT 20
+            """
+            p = (texto, texto)
 
         return self.cursor.execute(q, p).fetchall()
 
@@ -342,11 +367,13 @@ class Crud:
         return {"tipo": row[0], "caixa": row[1], "localizacao": row[2],
                 "slot": row[3], "frequencia": row[4]}
 
-    def atualizar_quantidade(self, nome, modelo, nova_qtd):
+    def atualizar_quantidade(self, item_id, nova_qtd):
         self.cursor.execute("""
-            UPDATE itens SET quantidade=?, atualizado_em=CURRENT_TIMESTAMP
-            WHERE nome=? AND modelo=?
-        """, (nova_qtd, nome, modelo))
+            UPDATE itens
+            SET quantidade=?, atualizado_em=CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (nova_qtd, item_id))
+
         self.conn.commit()
 
     # ═══════════════════════════════════════════════════════════════════════

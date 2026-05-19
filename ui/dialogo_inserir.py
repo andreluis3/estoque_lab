@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QStringListModel, QTimer, Qt
 from PyQt6.QtWidgets import QCompleter
-
+from regras_dominio.item_rules import ItemRules
 
 class DialogoInserir(QDialog):
     def __init__(self, crud):
@@ -110,41 +110,43 @@ class DialogoInserir(QDialog):
         self.model_completer.setStringList(nomes)
 
     def _auto_preencher(self, texto):
-        """Preenche campos automaticamente ao digitar o nome."""
-        texto = texto.strip().lower()
+
+        texto = texto.strip()
+
         if len(texto) < 3:
             return
 
-        # Tenta encontrar padrão mais comum no banco
-        padrao = self.crud.buscar_padrao_mais_comum(texto)
-        if padrao:
-            self._set_se_vazio(self.tipo,        padrao.get("tipo", ""))
-            self._set_se_vazio(self.caixa,       padrao.get("caixa", ""))
-            self._set_se_vazio(self.localizacao, padrao.get("localizacao", ""))
-            self._set_se_vazio(self.slot,        padrao.get("slot", ""))
-
-        # Preenchimento por palavra-chave como fallback
-        kw = {
-            "conector": ("Conector De Rf", "Maleta preta de conectores de RF", "Mesa branca"),
-            "resistor": ("Resistor",        "Caixa de resistores",              "Armário"),
-            "capacitor":("Capacitor",       "Caixa de capacitores",             "Armário"),
-            "esp32":    ("Esp32",           "Caixa microcontroladores",         "Armário"),
-            "led":      ("Led",             "Caixa dos LED",                    "Armário"),
-            "diodo":    ("Diodo",           "Caixa de diodos",                  "Armário"),
-            "transistor":("Semicondutor",   "Caixa de transistores e CI",       "Armário"),
-            "display":  ("Display",         "Caixa dos displays",               "Armário"),
-            "protoboard":("Protoboard",     "Caixa da protoboard preta",        "Armário"),
-            "sensor":   ("Módulo",          "Caixa de módulos sensores",        "Armário"),
-            "fusivel":  ("Fusível",         "Caixa de fusíveis",                "Armário"),
-            "rele":     ("Relé",            "Caixa do relé",                    "Armário"),
+        item = {
+            "nome": texto
         }
-        for chave, (tipo_val, caixa_val, loc_val) in kw.items():
-            if chave in texto:
-                self._set_se_vazio(self.tipo,        tipo_val)
-                self._set_se_vazio(self.caixa,       caixa_val)
-                self._set_se_vazio(self.localizacao, loc_val)
-                break
 
+        sugestao = ItemRules.aplicar_regras(item)
+
+        self._set_se_vazio(
+            self.tipo,
+            sugestao.get("tipo", "")
+        )
+
+        self._set_se_vazio(
+            self.caixa,
+            sugestao.get("caixa", "")
+        )
+
+        self._set_se_vazio(
+            self.localizacao,
+            sugestao.get("localizacao", "")
+        )
+
+        self._set_se_vazio(
+            self.slot,
+            sugestao.get("slot", "")
+        )
+
+        # =====================================================
+        # AUTOPREENCHIMENTO POR PALAVRA-CHAVE
+        # =====================================================
+
+        
     def _ao_selecionar_nome(self, nome):
         """Chamado quando usuário seleciona sugestão do autocomplete."""
         item = self.crud.buscar_por_nome(nome)

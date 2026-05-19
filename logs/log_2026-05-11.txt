@@ -1,0 +1,8 @@
+[2026-05-11 08:11:32] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-11 11:14:27] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Resistor De 270 Ω | 270 Ω | nome:Resistor de 270 Ω->Resistor De 270 Ω; quantidade:2->4
+[2026-05-11 11:14:27] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=26 | qtd=2
+[2026-05-11 11:19:46] | USER: samuel | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-11 11:20:07] | USER: samuel | AÇÃO: EDITAR_ITEM | DETALHE: Resistor De 1K Ω | 1 KΩ | nome:Resistor de 1K Ω->Resistor De 1K Ω; modelo:1 kΩ->1 KΩ; quantidade:98->97
+[2026-05-11 11:20:07] | USER: samuel | AÇÃO: MOVIMENTACAO_SAIDA | DETALHE: item_id=30 | qtd=1
+[2026-05-11 11:21:12] | USER: samuel | AÇÃO: RETIRADA | DETALHE: samuel retirou 20x Resistor de 100K Ω (100 kΩ) | Motivo: Placa de ESG
+[2026-05-11 11:22:13] | USER: samuel | AÇÃO: RETIRADA | DETALHE: samuel retirou 20x Capacitor de 1000 pF (1000 pF) | Motivo: Placa de esg

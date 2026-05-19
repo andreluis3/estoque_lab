@@ -1,1 +1,30 @@
 [2026-05-08 09:27:16] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-08 09:34:28] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-08 09:35:29] | USER: andre | AÇÃO: RETIRADA | DETALHE: andre retirou 6x Resistor de 10K Ω (10 Ω) | Motivo: Placa medidor do barbosa
+[2026-05-08 10:57:40] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-08 10:58:08] | USER: andre | AÇÃO: RETIRADA | DETALHE: andre retirou 4x Capacitor de 2,2 nF (2,2 nF) | Motivo: Para por na chapa que simula paciente
+[2026-05-08 10:58:44] | USER: andre | AÇÃO: RETIRADA | DETALHE: andre retirou 2x Resistor de 47K Ω (47k Ω) | Motivo: Para por na chapa que simula paciente
+[2026-05-08 10:59:41] | USER: andre | AÇÃO: RETIRADA | DETALHE: andre retirou 1x Microcontrolador (ESP 32 dev kit 1) | Motivo: Para por no projeto
+[2026-05-08 11:01:39] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=257 | qtd=39
+[2026-05-08 11:01:39] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Barra De Pino Macho Para Macho | BARRA DE PINO MACHO PARA MACHO | qtd=39
+[2026-05-08 11:07:46] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=258 | qtd=2
+[2026-05-08 11:07:46] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Carga N | CONECTOR CARGA N 50Ω | qtd=2
+[2026-05-08 11:15:12] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=259 | qtd=2
+[2026-05-08 11:15:12] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Fêmea X Fêmea X | CONECTOR BNC FÊMEA X FÊMEA X | qtd=2
+[2026-05-08 11:17:03] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=260 | qtd=2
+[2026-05-08 11:17:03] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Kre X Bnc Macho | CONECTOR KRE X BNC MACHO | qtd=2
+[2026-05-08 11:18:07] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=261 | qtd=2
+[2026-05-08 11:18:07] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Em T Fxfxm | CONECTOR BNC EM T FÊMEA X FÊMEA X MACHO | qtd=2
+[2026-05-08 11:19:29] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=262 | qtd=2
+[2026-05-08 11:19:29] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conecotr Bnc Fêmea Para 90º Graus X Sma M | CONECOTR BNC FÊMEA PARA 90º GRAUS X SMA M | qtd=2
+[2026-05-08 11:22:06] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=263 | qtd=0
+[2026-05-08 11:22:06] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Com Carga De 50 Ω | CONECTOR BNC COM CARGA DE 50 Ω | qtd=0
+[2026-05-08 11:35:45] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=264 | qtd=2
+[2026-05-08 11:35:45] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector T N Fêmea X Fêmea X Fêmea | CONECTOR T N FÊMEA X FÊMEA X FÊMEA | qtd=2
+[2026-05-08 11:37:17] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=265 | qtd=2
+[2026-05-08 11:37:17] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Fêmea T X Fêmea X Fêmea | CONECTOR BNC FÊMEA T X FÊMEA X FÊMEA | qtd=2
+[2026-05-08 11:37:41] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector Bnc Em T Fxfxm | CONECTOR BNC EM T FÊMEA X FÊMEA X MACHO | tipo:Conectores->Conectores De Rf
+[2026-05-08 11:38:26] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=266 | qtd=2
+[2026-05-08 11:38:26] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Macho X Macho | CONECTOR BNC MACHO X MACHO | qtd=2
+[2026-05-08 11:39:50] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=267 | qtd=2
+[2026-05-08 11:39:50] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector I  Fêmea X Fêmea | I  FÊMEA X FÊMEA | qtd=2
