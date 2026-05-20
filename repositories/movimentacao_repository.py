@@ -11,11 +11,40 @@ class MovimentacaoRepository:
             VALUES (?, ?, ?, ?)
         """, (item_id, tipo, quantidade, usuario))
 
-    def listar(self, query_complemento: str, params: list) -> list[tuple]:
-        query = """
-            SELECT m.id, m.item_id, i.nome, i.modelo, m.tipo, m.quantidade, m.usuario, m.data
+    def listar(self, item_id=None, tipo=None, usuario=None):
+        cursor = self.conn.cursor()
+
+        sql = """
+            SELECT
+                m.id,
+                i.id,
+                i.nome,
+                i.modelo,
+                m.tipo,
+                m.quantidade,
+                m.usuario,
+                m.data
             FROM movimentacoes m
-            LEFT JOIN itens i ON i.id = m.item_id
+            JOIN itens i ON i.id = m.item_id
             WHERE 1=1
-        """ + query_complemento
-        return self.cursor.execute(query, params).fetchall()
+        """
+
+        params = []
+
+        if item_id is not None:
+            sql += " AND i.id = ?"
+            params.append(item_id)
+
+        if tipo is not None:
+            sql += " AND m.tipo = ?"
+            params.append(tipo)
+
+        if usuario is not None:
+            sql += " AND m.usuario LIKE ?"
+            params.append(f"%{usuario}%")
+
+        sql += " ORDER BY m.data DESC"
+
+        cursor.execute(sql, params)
+
+        return cursor.fetchall()

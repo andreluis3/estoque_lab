@@ -1,0 +1,5 @@
+[2026-05-20 09:47:20] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-20 10:35:51] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-20 10:37:45] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-20 10:40:04] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-20 10:46:30] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema

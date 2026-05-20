@@ -54,7 +54,10 @@ class EstoqueService:
 
             # Executa a inteligência preditiva do ItemRules para campos vazios
             sugestao = ItemRules.aplicar_regras({"nome": dados["nome"]})
-            if not dados_crus.get("tipo") and sugestao.get("tipo"): dados["tipo"] = sugestao["tipo"]
+            obrigatorios = ["nome", "modelo", "quantidade"]
+            for campo in obrigatorios:
+                if not dados_crus.get(campo):
+                    raise ValueError(f"Campo '{campo}' é obrigatório e não foi preenchido. Sugestão: '{sugestao.get(campo, 'N/A')}'")
             if not dados_crus.get("caixa") and sugestao.get("caixa"): dados["caixa"] = sugestao["caixa"]
             if not dados_crus.get("localizacao") and sugestao.get("localizacao"): dados["localizacao"] = sugestao["localizacao"]
             if not dados_crus.get("slot") and sugestao.get("slot"): dados["slot"] = sugestao["slot"]
@@ -158,5 +161,50 @@ class EstoqueService:
         return [
             {"id": r[0], "nome": r[1], "tipo": r[2], "modelo": r[3],
              "quantidade": r[4], "caixa": r[5], "localizacao": r[6], "slot": r[7]}
+            for r in rows
+        ]
+        
+        # ── HISTÓRICO E MOVIMENTAÇÕES ──────────────────────────────────────────
+
+    def listar_movimentacoes(self, item_id=None, tipo=None, usuario=None):
+        rows = self.mov_repo.listar(
+            item_id=item_id,
+            tipo=tipo,
+            usuario=usuario
+        )
+
+        return [
+            {
+                "id": r[0],
+                "item_id": r[1],
+                "item_nome": r[2],
+                "item_modelo": r[3],
+                "tipo": r[4],
+                "quantidade": r[5],
+                "usuario": r[6],
+                "data": r[7],
+            }
+            for r in rows
+        ]
+
+    def listar_historico(self, item_id=None, usuario=None):
+        rows = self.hist_repo.listar(
+            item_id=item_id,
+            usuario=usuario
+        )
+
+        return [
+            {
+                "id": r[0],
+                "item_id": r[1],
+                "item_nome": r[2],
+                "item_modelo": r[3],
+                "campo": r[4],
+                "valor_anterior": r[5],
+                "valor_novo": r[6],
+                "usuario": r[7],
+                "acao": r[8],
+                "data": r[9],
+            }
             for r in rows
         ]
