@@ -1,11 +1,11 @@
 import sys
 from PyQt6.QtWidgets import QApplication
 
-from database.db import criar_tabela, conectar_db
-from database.backup import criar_backup
-from services.estoque_service import EstoqueService
-from ui.janela_principal import MainWindow
-
+from inventario.database.db import criar_tabela, conectar_db
+from inventario.services.backup_service import criar_backup
+from inventario.services.estoque_service import EstoqueService
+from inventario.ui.janela_principal import MainWindow
+from inventario.frontend_henrique.projeto.main import SistemaInventario
 
 def main():
     print("Iniciando aplicação Estoque Lab...")

@@ -1,0 +1,154 @@
+# Abre uma janela com uma lista de itens em falra
+# Posibilita comprar itens
+
+import webbrowser  # Para o navegador
+
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QMessageBox,
+    QLabel,
+    QHeaderView
+)
+
+
+class JanelaItensFalta(QWidget):
+    # Funções principais:
+    def __init__(self, lista_alertas):
+        super().__init__()
+
+        self.lista_alertas = sorted(lista_alertas)
+        self.iniciar_ui()
+
+    def iniciar_ui(self):
+        self.setWindowTitle(
+            "Itens em Falta"
+        )
+
+        self.resize(900, 600)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #121212;
+                color: white;
+            }
+
+            QTableWidget {
+                background-color: #1e1e1e;
+                color: white;
+                gridline-color: #444;
+                border: 1px solid #444;
+                font-size: 14px;
+            }
+
+            QHeaderView::section {
+                background-color: #2d2d2d;
+                color: white;
+                padding: 8px;
+                border: none;
+                font-weight: bold;
+            }
+
+            QPushButton {
+                background-color: #2d2d2d;
+                color: white;
+                border-radius: 8px;
+                padding: 6px;
+            }
+
+            QPushButton:hover {
+                background-color: #3a3a3a;
+            }
+
+        """)
+
+        layout = QVBoxLayout()
+
+        titulo = QLabel(
+            f"{len(self.lista_alertas)} itens com estoque baixo"
+        )
+
+        titulo.setStyleSheet("""
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+        """)
+
+        layout.addWidget(titulo)
+
+        # TABELA
+        self.tabela = QTableWidget()
+        self.tabela.setColumnCount(3)
+        self.tabela.setHorizontalHeaderLabels([
+            "N°",
+            "Item",
+            "Comprar"
+        ])
+
+        self.tabela.horizontalHeader().setSectionResizeMode(
+            1,
+            QHeaderView.ResizeMode.Stretch
+        )
+
+        self.tabela.setRowCount(
+            len(self.lista_alertas)
+        )
+
+        # PREENCHENDO TABELA
+        for i, item in enumerate(self.lista_alertas):
+            numero = QTableWidgetItem(
+                str(i + 1)
+            )
+
+            texto_item = QTableWidgetItem(
+                item
+            )
+
+            self.tabela.setItem(i, 0, numero)
+            self.tabela.setItem(i, 1, texto_item)
+
+                    # BOTÃO COMPRAR
+            botao_comprar = QPushButton("Comprar")
+
+            botao_comprar.clicked.connect(
+                lambda _, nome=item: self.comprar_item(nome)
+            )
+
+            self.tabela.setCellWidget(
+                i,
+                2,
+                botao_comprar
+            )
+
+        layout.addWidget(self.tabela)
+        self.setLayout(layout)
+
+    # Funções de apoio:  
+    def comprar_item(self, nome_item):
+        # Remove a parte do alerta
+        nome_limpo = nome_item.split(
+            "está com apenas"
+        )[0].strip()
+
+        # Formata para URL
+        pesquisa = nome_limpo.replace(
+            " ",
+            "+"
+        )
+
+        # URL Google
+        url = (
+            f"https://www.google.com/search?q=comprar+{pesquisa}"
+        )
+
+        # Abre navegador
+        webbrowser.open(url)
+
+        # Mensagem
+        QMessageBox.information(
+            self,
+            "Pesquisa",
+            f"Pesquisando:\n\n{nome_limpo}"
+        )

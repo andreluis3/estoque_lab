@@ -18,8 +18,8 @@ from datetime import datetime
 # Ajusta o path para rodar da raiz do projeto
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from database.db import criar_tabela, conectar_db
-from services.importador import importar_para_banco
+from inventario.database.db import criar_tabela, conectar_db
+from inventario.services.importador import importar_para_banco
 
 
 def resetar_e_importar(caminho_planilha: str, usuario: str = "reset"):
