@@ -1,2 +1,4 @@
 [2026-05-21 08:34:19] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
 [2026-05-21 10:28:08] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-21 12:47:45] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-21 12:54:07] | USER: andre | AÇÃO: RETIRADA | DETALHE: andre retirou 2x Transitor IRF3205 | Motivo: Felipe retirou para projetoda petro

@@ -658,52 +658,6 @@ class SistemaInventario(QWidget):
         return
        
 
-        # Caso o item seja encontrado:
-        #Gera uma tabela como resultado.
-        colunas = [ # Colunas da tabela
-            "Nome Item",
-            "Tipo",
-            "Quantidade",
-            "Localização",
-            "Slot"
-        ] # FIM colunas
-
-        self.tabela.setRowCount(len(resultado))     # Define a quantas linhas a tabela terá
-        self.tabela.setColumnCount(len(colunas))    # Define a quantidade de colunas 
-        self.tabela.setHorizontalHeaderLabels(colunas)
-
-        for i, (_, linha) in enumerate(resultado.iterrows()):   # Percorre as linhas do DataFrame
-            for j, coluna in enumerate(colunas):    # Percorre as colunas do DataFrame
-                item = QTableWidgetItem(
-                    str(linha[coluna])
-                ) # FIM item
-
-                self.tabela.setItem(i, j, item) # Posiciona os itens nas colunas 
-
-        for i, (_, linha) in enumerate(resultado.iterrows()):
-            for j, coluna in enumerate(colunas):
-                item = QTableWidgetItem(
-                    str(linha[coluna])
-                )
-
-                # ALINHAMENTO
-                if coluna == "Nome Item":
-                    item.setTextAlignment(
-                        Qt.AlignmentFlag.AlignVCenter |
-                        Qt.AlignmentFlag.AlignLeft
-                    )
-
-                else:
-                    item.setTextAlignment(
-                        Qt.AlignmentFlag.AlignCenter
-                    )
-
-                self.tabela.setItem(i, j, item)
-
-        item.setTextAlignment(
-            Qt.AlignmentFlag.AlignCenter
-        )
-
     def atualizar_layout(self):
         # Função para tabela acompanhar o menu
         if self.menu_aberto:

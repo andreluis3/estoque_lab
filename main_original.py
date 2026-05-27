@@ -1,49 +1,30 @@
+from PyQt6.QtWidgets import QApplication
 import sys
 
-from PyQt6.QtWidgets import QApplication
-
-from inventario.database.db import (
-    criar_tabela,
-    conectar_db
-)
-
+from inventario.database.db import criar_tabela, conectar_db
 from inventario.services.backup_service import criar_backup
 from inventario.services.estoque_service import EstoqueService
 
-# IMPORTA A UI DO HENRIQUE
-from inventario.frontend_henrique.projeto.main import SistemaInventario
+from ui.app import AppUI
 
 
 def main():
-    print("Iniciando integração frontend Henrique...")
+    print("Iniciando sistema...")
 
-    # Inicializa estrutura do banco
     criar_tabela()
 
-    # Backup preventivo
     try:
         criar_backup()
-        print("-> Backup criado com sucesso.")
     except Exception as e:
-        print(f"-> Erro no backup: {e}")
+        print("backup erro:", e)
 
-    # QApplication
     app = QApplication(sys.argv)
 
-    # Conexão banco
-    conexao_db = conectar_db()
+    conn = conectar_db()
+    service = EstoqueService(conn=conn)
 
-    # Service principal
-    estoque_service = EstoqueService(
-        conn=conexao_db
-    )
-
-    # Abre frontend Henrique
-    window = SistemaInventario(
-        estoque_service=estoque_service
-    )
-
-    window.show()
+    ui = AppUI(service)
+    ui.show()
 
     sys.exit(app.exec())
 
