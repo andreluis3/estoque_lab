@@ -34,7 +34,7 @@ class JanelaPrincipal(QMainWindow):
         self.layout.addWidget(self.btn_estoque)
         self.layout.addWidget(self.btn_historico)
         #alerta henrique
-        self.self.alert_service = AlertService(self.service)
+        self.alerta_service = AlertService(self.service)
        
 
         # STACK (router real)
