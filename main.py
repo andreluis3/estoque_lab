@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QApplication
 from inventario.database.db import criar_tabela, conectar_db
 from inventario.services.backup_service import criar_backup
 from inventario.services.estoque_service import EstoqueService
-from inventario.ui.janela_principal import MainWindow
+from inventario.ui.legacy.janela_principal import MainWindow
 
 
 def main():

@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
-from ui.tabela_estoque import TabelaEstoque
+from inventario.ui.legacy.tabela_estoque import TabelaEstoque
 
 
 class TelaEstoque(QWidget):
@@ -18,5 +18,5 @@ class TelaEstoque(QWidget):
         self.carregar_dados()
 
     def carregar_dados(self):
-        itens = self.service.listar_itens()
+        itens = self.service.listar_todos_itens()
         self.tabela.carregar_dados(itens)

@@ -1,4 +1,4 @@
-from .janela_base import JanelaBase
+from ui.components.janela_base import JanelaBase
 
 import os
 import webbrowser
@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QScrollArea
 )
 
-from styles.scrollbar import SCROLLBAR
+from ui.theme.scrollbar import SCROLLBAR
 
 class JanelaItensFalta(JanelaBase):
     def __init__(self, alertas):

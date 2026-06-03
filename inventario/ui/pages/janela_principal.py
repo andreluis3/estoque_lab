@@ -34,7 +34,7 @@ class JanelaPrincipal(QMainWindow):
         self.layout.addWidget(self.btn_estoque)
         self.layout.addWidget(self.btn_historico)
         #alerta henrique
-        self.alerta_service = AlertService(self.service)
+        self.pages["alertas"] = PageAlertas(self.alerta_service)
        
 
         # STACK (router real)
@@ -72,6 +72,7 @@ class JanelaPrincipal(QMainWindow):
             self.stack.setCurrentWidget(page)
 
     def abrir_falta(self):
-        alertas = self.service.get_alertas()
+        alertas = self.alerta_service.get_alertas()
+
         janela = JanelaItensFalta(alertas)
-        janela.exec()  # melhor que show()
+        janela.show()

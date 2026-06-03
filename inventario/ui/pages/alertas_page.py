@@ -17,6 +17,5 @@ class PageAlertas(QWidget):
 
     def abrir_alertas(self):
         alertas = self.alert_service.get_alertas()
-
         self.janela = JanelaItensFalta(alertas)
-        self.janela.exec()
+        self.janela.show()

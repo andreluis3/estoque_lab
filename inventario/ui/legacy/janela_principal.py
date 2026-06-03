@@ -4,9 +4,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer
 
-from inventario.ui.tabela_estoque import TabelaEstoque
-from inventario.ui.dialogo_inserir import DialogoInserir
-from inventario.ui.tela_historico import TelaHistorico
+from inventario.ui.legacy.tabela_estoque import TabelaEstoque
+from inventario.ui.legacy.dialogo_inserir import DialogoInserir
+from inventario.ui.legacy.tela_historico import TelaHistorico
 from inventario.services.authenticator import autenticar
 from inventario.services.log_service import registrar_log
 
