@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton
-from ui.pages.janela_itens_falta import JanelaItensFalta
+from inventario.ui.pages.janela_itens_falta import JanelaItensFalta
 
 #trouxe do programa do henrique
 class PageAlertas(QWidget):

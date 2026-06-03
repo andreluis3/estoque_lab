@@ -2,7 +2,7 @@
 tela_historico.py — Tela de histórico de movimentações e auditoria.
 
 Como usar no janela_principal.py:
-    from ui.tela_historico import TelaHistorico
+    from invenario.ui.tela_historico import TelaHistorico
     # num botão:
     tela = TelaHistorico(self.crud)
     tela.exec()

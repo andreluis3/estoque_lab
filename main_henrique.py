@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QApplication
 from inventario.database.db import criar_tabela
 from inventario.services.estoque_service import EstoqueService
 
-from ui.app import AppUI
+from inventario.ui.app import AppUI
 
 
 def main():

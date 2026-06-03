@@ -1,15 +1,15 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QPushButton
-from ui.pages.janela_itens_falta import JanelaItensFalta
-from ui.pages.estoque import TelaEstoque
-from ui.pages.historico import TelaHistorico
+from inventario.ui.pages.janela_itens_falta import JanelaItensFalta
+from inventario.ui.pages.estoque import TelaEstoque
+from inventario.ui.pages.historico import TelaHistorico
 
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget
-from ui.pages.estoque import TelaEstoque
-from ui.pages.historico import TelaHistorico
-from ui.pages.janela_itens_falta import JanelaItensFalta 
+from inventario.ui.pages.estoque import TelaEstoque
+from inventario.ui.pages.historico import TelaHistorico
+from inventario.ui.pages.janela_itens_falta import JanelaItensFalta 
 from inventario.services.alerta_service import AlertService
-from ui.pages.alertas_page import PageAlertas
-
+from inventario.ui.pages.alertas_page import PageAlertas
+from inventario.services.alerta_service import AlertService
 
 class JanelaPrincipal(QMainWindow):
     def __init__(self, service):
@@ -33,24 +33,25 @@ class JanelaPrincipal(QMainWindow):
         self.layout.addWidget(self.btn_falta)
         self.layout.addWidget(self.btn_estoque)
         self.layout.addWidget(self.btn_historico)
-        #alerta henrique
-        self.pages["alertas"] = PageAlertas(self.alerta_service)
-       
-
-        # STACK (router real)
+        # STACK
         self.stack = QStackedWidget()
         self.layout.addWidget(self.stack)
 
-        # REGISTRO DE PÁGINAS (IMPORTANTE)
+        # REGISTRO DE PÁGINAS
         self.pages = {}
 
+        # SERVICE ALERTAS
+        self.alerta_service = AlertService(self.service)
+
         self.register_pages()
+
+        # PAGE ALERTAS
+        self.pages["alertas"] = PageAlertas(self.alerta_service)
 
         # ROTAS
         self.btn_estoque.clicked.connect(lambda: self.navigate("estoque"))
         self.btn_historico.clicked.connect(lambda: self.navigate("historico"))
-        self.btn_falta.clicked.connect(self.abrir_falta)
-        self.pages["alertas"] = PageAlertas(self.alert_service)
+       #self.btn_falta.clicked.connect(self.abrir_falta) popup do henrique
         self.stack.addWidget(self.pages["alertas"])
         
         #btn

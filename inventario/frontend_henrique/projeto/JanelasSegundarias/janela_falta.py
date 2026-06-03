@@ -17,8 +17,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QScrollArea
 )
-
-from styles.scrollbar import SCROLLBAR
+from inventario.ui.theme.scrollbar import SCROLLBAR
 
 class JanelaItensFalta(JanelaBase):
     def __init__(self, alertas):

@@ -1,10 +1,10 @@
-from ui.pages.janela_principal import JanelaPrincipal
-
+from inventario.ui.pages.henrique_screen import TelaHenriquePage
 
 class AppUI:
     def __init__(self, service):
         self.service = service
-        self.window = JanelaPrincipal(service)
+        # Instancia a interface limpa e decomposta passando o motor de dados (Service)
+        self.window = TelaHenriquePage(estoque_service=self.service)
 
     def show(self):
-        self.window.show()
+        self.window.showMaximized() # Garante abertura ocupando a tela de forma profissional

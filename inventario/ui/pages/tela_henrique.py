@@ -11,7 +11,7 @@ from inventario.frontend_henrique.projeto.alerta import verificar_estoque
 from inventario.frontend_henrique.projeto.utils import *
 from inventario.ui.theme.scrollbar import SCROLLBAR
 from inventario.frontend_henrique.projeto.JanelasSegundarias.janela_falta import JanelaItensFalta
-
+from inventario.frontend_henrique.projeto.utils import *
 import sys
 import os
 from docx import Document
@@ -130,7 +130,7 @@ class PopupAlerta(QDialog):
         if self.parent is not None:
             self.parent.abrir_janela_falta()
 
-class SistemaInventario(QWidget):
+class SistemaInventarioV2(QWidget):
     # Funções principais:
     def __init__(self, estoque_service=None):
         super().__init__()  # Inicializa a classe e a jenaela
