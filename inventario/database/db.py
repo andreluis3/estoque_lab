@@ -69,7 +69,34 @@ def criar_tabela():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL
     )
+    
       """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS lista_compras (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        item_id INTEGER,
+        nome TEXT NOT NULL,
+        modelo TEXT,
+        quantidade_atual INTEGER DEFAULT 0,
+
+        status TEXT DEFAULT 'PENDENTE',
+
+        observacao TEXT,
+        usuario TEXT DEFAULT 'sistema',
+
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (item_id) REFERENCES itens(id)
+    );
+        """)
+    
+    if __name__ == "__main__":
+        criar_tabela()
+    print (f"tabela criada {__file__} com sucesso.")
+    print("Banco atualizado com sucesso.")
+     
+                   
     conn.commit()
     conn.close()
