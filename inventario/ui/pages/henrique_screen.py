@@ -3,9 +3,12 @@ from PyQt6.QtCore import QPropertyAnimation, QRect, QEasingCurve, Qt
 from inventario.ui.widgets.menu_lateral import MenuLateralWidget
 from inventario.ui.widgets.barra_busca import BarraBuscaWidget
 from inventario.ui.components.logo_widget import LogoWidget
-from inventario.ui.widgets.tabela_estoque_widget import TabelaEstoqueWidget
+from inventario.ui.legacy.tabela_estoque import TabelaEstoque
 from inventario.ui.widgets.popup_alerta import PopupAlertaWidget
 from inventario.ui.dialogs.falta_dialog import DialogFalta
+from inventario.services.estoque_service import EstoqueService
+
+
 
 class TelaHenriquePage(QWidget):
     def __init__(self, estoque_service=None, parent=None):
@@ -26,7 +29,10 @@ class TelaHenriquePage(QWidget):
         self.setStyleSheet("background-color: black; color: white;")
 
         # 1. Instanciação da Tabela Primeiro (Fica ao fundo do Menu Lateral)
-        self.tabela = TabelaEstoqueWidget(self)
+        self.tabela = TabelaEstoque()
+        self.tabela.show()
+
+        print("Tabela criada")
 
         # 2. Instanciação do Menu Lateral Animado
         self.menu = MenuLateralWidget(self)
@@ -65,7 +71,9 @@ class TelaHenriquePage(QWidget):
 
         # Configura as proporções iniciais geométricas
         self.atualizar_layout()
+        print(self.tabela.geometry())
         self.verificar_alertas_sistema()
+        self.carregar_dados_tabela_naui()
 
     def animar_menu(self):
         self.animacao = QPropertyAnimation(self.menu, b"geometry")
@@ -113,3 +121,13 @@ class TelaHenriquePage(QWidget):
     def abrir_janela_falta(self):
         self.janela_falta = DialogFalta(self.alertas_dados, self)
         self.janela_falta.show()
+        
+    def carregar_dados_tabela_naui(self):
+        print ("Carregando dados na tabela a partir do EstoqueService...")
+        if not self.estoque_service:
+            print ("Erro : Estoque service não fornecido. Verifique a inicialização.")
+            return
+        itens = self.estoque_service.listar_todos_itens()
+        self.tabela.carregar_dados(itens)
+        print("Dados carregados na tabela com sucesso.")
+        

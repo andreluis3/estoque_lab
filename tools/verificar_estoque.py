@@ -1,13 +1,18 @@
+import os
+import sys
+
+ROOT_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")
+)
+
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+print("ROOT:", ROOT_DIR)
+print("PATH:", sys.path[0])
+
 from inventario.database.db import conectar_db
 from inventario.services.lista_compras_service import adicionar_item
-
-import sys
-import os
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, BASE_DIR)
-
-from inventario.database.db import conectar_db
 
 LIMITE_ESTOQUE = 10
 
