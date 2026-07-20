@@ -4,6 +4,7 @@ from PyQt6.QtCore import pyqtSignal
 class BarraBuscaWidget(QWidget):
     # Sinal emitido para que a Controller/Page capture o termo pesquisado sem acoplar a lógica aqui
     buscar_clicado = pyqtSignal(str)
+    texto_alterado = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -15,6 +16,7 @@ class BarraBuscaWidget(QWidget):
         # Input de texto
         self.input_busca = QLineEdit(self)
         self.input_busca.setGeometry(0, 0, 400, 60)
+        self.input_busca.textChanged.connect(self.emitir_texto_alterado)
         self.input_busca.setPlaceholderText("Digite o nome do componente")
         self.input_busca.setStyleSheet("""
             QLineEdit {
@@ -29,6 +31,7 @@ class BarraBuscaWidget(QWidget):
                 border: 2px solid #0078ff;
             }
         """)
+   
 
         # Botão Buscar
         self.botao_busca = QPushButton("Buscar", self)

@@ -119,9 +119,28 @@ class TelaHenriquePage(QWidget):
             self.height() - 250
         )
 
-    def realizar_busca(self, texto):
-        # Aqui você fará a chamada limpa ao seu Service no futuro. Exemplo visual mantido:
-        print(f"Buscando no Service por: {texto}")
+    def realizar_busca(self):
+        try:
+            termo = self.input_busca.text().strip()
+
+            print(f"[BUSCA Henrique_screen] Termo: {termo}")
+
+            print("[BUSCA Henrique_screen] Chamando service...")
+            itens = self.estoque_service.buscar_itens(termo)
+
+            print("[BUSCA Henrique_screen] Service retornou")
+            print(itens)
+
+            print(f"[BUSCA Henrique_screen] Quantidade: {len(itens)}")
+
+            print("[BUSCA Henrique_screen] Atualizando tabela...")
+            self.tabela.carregar_dados(itens)
+
+            print("[BUSCA Henrique_screen] Tabela atualizada.")
+
+        except Exception:
+            import traceback
+            traceback.print_exc()
 
     def verificar_alertas_sistema(self):
         # Simulação ou leitura segura de dados vindos do seu Service principal

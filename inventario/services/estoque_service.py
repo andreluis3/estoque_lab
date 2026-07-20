@@ -319,6 +319,30 @@ class EstoqueService:
             for r in rows
         ]
         
+        
+    def buscar_itens(self, texto, filtro):
+        print("[EstoqueService] Entrou no service em buscar itens")
+        
+        rows = self.item_repo.buscar_por_termo(
+            texto,
+            filtro
+        )
+        print(f"[EstoqueService] {len(rows)} itens encontrados para termo='{texto}' e filtro='{filtro}'")
+       
+        return [
+            {
+                "id": r[0],
+                "nome": r[1],
+                "tipo": r[2],
+                "modelo": r[3],
+                "quantidade": r[4],
+                "caixa": r[5],
+                "localizacao": r[6],
+                "slot": r[7]
+            }
+            for r in rows
+        ]
+    
         # ── HISTÓRICO E MOVIMENTAÇÕES ──────────────────────────────────────────
 
     def listar_movimentacoes(self, item_id=None, tipo=None, usuario=None):

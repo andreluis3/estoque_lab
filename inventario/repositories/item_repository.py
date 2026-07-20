@@ -53,17 +53,41 @@ class ItemRepository:
             FROM itens ORDER BY nome
         """).fetchall()
 
-    def buscar_por_termo(self, texto: str, filtro: str) -> list[tuple]:
+    def buscar_por_termo(self, texto: str) -> list[tuple]:
+
         texto_like = f"%{texto}%"
-        if filtro == "nome":
-            q = "SELECT * FROM itens WHERE nome LIKE ? ORDER BY id ASC LIMIT 20"
-            return self.cursor.execute(q, (texto_like,)).fetchall()
-        elif filtro == "modelo":
-            q = "SELECT * FROM itens WHERE modelo LIKE ? ORDER BY id ASC LIMIT 20"
-            return self.cursor.execute(q, (texto_like,)).fetchall()
-        else:
-            q = "SELECT * FROM itens WHERE nome LIKE ? OR modelo LIKE ? ORDER BY id ASC LIMIT 20"
-            return self.cursor.execute(q, (texto_like, texto_like)).fetchall()
+        print("[Repository] Executando Query SQL")
+        
+        print(f"[ItemRepository] Buscando itens com termo: {texto_like}")
+        
+        return self.cursor.execute("""
+                SELECT
+                    id,
+                    nome,
+                    tipo,
+                    modelo,
+                    quantidade,
+                    caixa,
+                    localizacao,
+                    slot
+                FROM itens
+                WHERE
+                    LOWER(nome) LIKE LOWER(?)
+                    OR LOWER(tipo) LIKE LOWER(?)
+                    OR LOWER(modelo) LIKE LOWER(?)
+                    OR LOWER(caixa) LIKE LOWER(?)
+                    OR LOWER(localizacao) LIKE LOWER(?)
+                    OR LOWER(slot) LIKE LOWER(?)
+                ORDER BY nome
+            """, (
+                texto_like,
+                texto_like,
+                texto_like,
+                texto_like,
+                texto_like,
+                texto_like,
+            )).fetchall()
+        
 
     def buscar_por_nome_like(self, nome: str) -> list[tuple]:
         return self.cursor.execute("""

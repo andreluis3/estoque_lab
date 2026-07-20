@@ -16,7 +16,7 @@ import sys
 import os
 from docx import Document
 from datetime import datetime
-
+import traceback
 from PyQt6.QtGui import QIcon   # Para adicionar imagens
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import QSize
@@ -67,12 +67,9 @@ class PopupAlerta(QDialog):
     def __init__(self, quantidade_alertas, lista_alertas, parent=None):
         super().__init__(parent)
 
-        
         self.parent = parent
         self.lista_alertas = lista_alertas
-
         self.setFixedSize(350, 160)
-
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint
@@ -648,17 +645,34 @@ class SistemaInventarioV2(QWidget):
         print("[Tela_Henrique] Construindo interface...")
         self.animacao.start()
                                                                                       
-    def realizar_busca(self):   # Busca o item nas planilhas
-        nome = self.input_busca.text()
+    def realizar_busca(self):
+        try:
+            termo = self.input_busca.text().strip()
 
-        print(f"Buscando: {nome}")
+            print("=" * 50)
+            print("[Tela_Henrique] Iniciando busca")
+            print(f"Termo: '{termo}'")
 
-        QMessageBox.information(
-            self,
-            "Busca",
-            f"Busca integrada futuramente:\n{nome}"
-        )
-        return
+            if termo:
+                print("[Tela_Henrique] Chamando buscar_itens()")
+                itens = self.estoque_service.buscar_itens(termo)
+            else:
+                print("[Tela_Henrique] Chamando listar_todos_itens()")
+                itens = self.estoque_service.listar_todos_itens()
+
+            print(f"[Tela_Henrique] {len(itens)} itens encontrados")
+
+            self.tabela.carregar_dados(itens)
+
+            print("[Tela_Henrique] Tabela atualizada com sucesso")
+            print("=" * 50)
+
+        except Exception as e:
+            print("=" * 50)
+            print("[Tela_Henrique] ERRO AO REALIZAR BUSCA")
+            print(type(e).__name__)
+            print(e)
+            print("=" * 50)
        
 
     def atualizar_layout(self):
