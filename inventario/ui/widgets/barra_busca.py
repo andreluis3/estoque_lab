@@ -11,7 +11,7 @@ class BarraBuscaWidget(QWidget):
 
     def iniciar_ui(self):
         self.setFixedSize(650, 60) # Largura do input (400) + espaço + largura do botão (200)
-
+        print("[BarraBuscaWidget] Construindo interface...")
         # Input de texto
         self.input_busca = QLineEdit(self)
         self.input_busca.setGeometry(0, 0, 400, 60)
@@ -47,4 +47,12 @@ class BarraBuscaWidget(QWidget):
         self.botao_busca.clicked.connect(self.emitir_busca)
 
     def emitir_busca(self):
-        self.buscar_clicado.emit(self.input_busca.text())
+
+        texto = self.input_busca.text()
+
+        print("="*50)
+        print("[BarraBusca]")
+        print(f"Texto pesquisado: {texto}")
+        print("="*50)
+
+        self.buscar_clicado.emit(texto)

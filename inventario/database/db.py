@@ -10,6 +10,7 @@ def conectar_db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
+    
     return conn
 
 def criar_tabela():

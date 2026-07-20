@@ -48,45 +48,200 @@ class EstoqueService:
     # ── OPERAÇÕES CORE DE NEGÓCIO (Antigo CRUD) ──────────────────────────────
 
     def registrar_item(self, dados_crus: dict, usuario="sistema") -> dict:
+
+        print("\n")
+        print("="*60)
+        print("DEBUG SERVICE - REGISTRAR ITEM")
+        print("="*60)
+
+        print("Dados recebidos pela tela:")
+        print(dados_crus)
+
         try:
+
+            print("\n[1] Validando dados...")
             self.validar_dados_item(dados_crus)
+
+            print("OK validação")
+
+            print("\n[2] Normalizando dados...")
             dados = self.normalizar_dados(dados_crus)
 
-            # Executa a inteligência preditiva do ItemRules para campos vazios
-            sugestao = ItemRules.aplicar_regras({"nome": dados["nome"]})
+            print("Dados normalizados:")
+            print(dados)
+
+
+            print("\n[3] Aplicando regras ItemRules...")
+
+            sugestao = ItemRules.aplicar_regras({
+                "nome": dados["nome"]
+            })
+
+            print("Sugestão encontrada:")
+            print(sugestao)
+
+
             obrigatorios = ["nome", "modelo", "quantidade"]
+
             for campo in obrigatorios:
                 if not dados_crus.get(campo):
-                    raise ValueError(f"Campo '{campo}' é obrigatório e não foi preenchido. Sugestão: '{sugestao.get(campo, 'N/A')}'")
-            if not dados_crus.get("caixa") and sugestao.get("caixa"): dados["caixa"] = sugestao["caixa"]
-            if not dados_crus.get("localizacao") and sugestao.get("localizacao"): dados["localizacao"] = sugestao["localizacao"]
-            if not dados_crus.get("slot") and sugestao.get("slot"): dados["slot"] = sugestao["slot"]
+                    raise ValueError(
+                        f"Campo '{campo}' é obrigatório"
+                    )
 
-            existente = self.item_repo.buscar_por_nome_e_modelo(dados["nome"], dados["modelo"])
+
+            if not dados_crus.get("caixa") and sugestao.get("caixa"):
+                dados["caixa"] = sugestao["caixa"]
+
+            if not dados_crus.get("localizacao") and sugestao.get("localizacao"):
+                dados["localizacao"] = sugestao["localizacao"]
+
+            if not dados_crus.get("slot") and sugestao.get("slot"):
+                dados["slot"] = sugestao["slot"]
+
+
+            print("\n[4] Procurando item existente...")
+
+            existente = self.item_repo.buscar_por_nome_e_modelo(
+                dados["nome"],
+                dados["modelo"]
+            )
+
+            print("Resultado busca:")
+            print(existente)
+
+
 
             if existente:
+
+                print("\n[5] ITEM EXISTE - atualizando quantidade")
+
                 item_id, quantidade_atual = existente
+
                 nova_qtd = quantidade_atual + dados["quantidade"]
 
-                self.item_repo.atualizar_quantidade(item_id, nova_qtd)
-                self.hist_repo.registrar(item_id, "quantidade", str(quantidade_atual), str(nova_qtd), usuario, "entrada_manual")
-                self.mov_repo.registrar(item_id, "entrada", dados["quantidade"], usuario)
-                
-                registrar_log(usuario, "ENTRADA_MANUAL", f"{dados['nome']} | {dados['modelo']} | soma={dados['quantidade']} para {nova_qtd}")
+                print(
+                    f"Quantidade antiga: {quantidade_atual}"
+                )
+                print(
+                    f"Nova quantidade: {nova_qtd}"
+                )
+
+
+                self.item_repo.atualizar_quantidade(
+                    item_id,
+                    nova_qtd
+                )
+
+                print("Quantidade atualizada")
+
+
+                self.hist_repo.registrar(
+                    item_id,
+                    "quantidade",
+                    str(quantidade_atual),
+                    str(nova_qtd),
+                    usuario,
+                    "entrada_manual"
+                )
+
+                print("Histórico registrado")
+
+
+                self.mov_repo.registrar(
+                    item_id,
+                    "entrada",
+                    dados["quantidade"],
+                    usuario
+                )
+
+                print("Movimentação registrada")
+
+
                 acao = "atualizado"
+
+
+
             else:
+
+                print("\n[5] ITEM NOVO - inserindo")
+
                 item_id = self.item_repo.salvar(dados)
-                self.hist_repo.registrar(item_id, "*", None, f"{dados['nome']} | {dados['modelo']}", usuario, "inserido")
-                self.mov_repo.registrar(item_id, "entrada", dados["quantidade"], usuario)
-                
-                registrar_log(usuario, "INSERIR_ITEM", f"{dados['nome']} | {dados['modelo']} | qtd={dados['quantidade']}")
+
+                print("ID criado:")
+                print(item_id)
+
+
+                self.hist_repo.registrar(
+                    item_id,
+                    "*",
+                    None,
+                    f"{dados['nome']} | {dados['modelo']}",
+                    usuario,
+                    "inserido"
+                )
+
+                print("Histórico registrado")
+
+
+                self.mov_repo.registrar(
+                    item_id,
+                    "entrada",
+                    dados["quantidade"],
+                    usuario
+                )
+
+                print("Movimentação registrada")
+
+
                 acao = "inserido"
 
+
+
+            print("\n[6] Registrando LOG")
+
+            registrar_log(
+                usuario,
+                "INSERIR_ITEM",
+                f"{dados['nome']} | {dados['modelo']} | qtd={dados['quantidade']}"
+            )
+
+
+            print("\n[7] Commit")
+
             self.conn.commit()
-            return {"status": "ok", "acao": acao, "item_id": item_id}
+
+
+            print("COMMIT OK")
+
+            print("="*60)
+            print("FIM REGISTRO ITEM")
+            print("="*60)
+
+
+            return {
+                "status":"ok",
+                "acao":acao,
+                "item_id":item_id
+            }
+
+
         except Exception as e:
+
+            print("\n")
+            print("="*60)
+            print("ERRO NO SERVICE")
+            print(type(e))
+            print(e)
+            print("="*60)
+
+
             self.conn.rollback()
-            return {"status": "erro", "mensagem": str(e)}
+
+            return {
+                "status":"erro",
+                "mensagem":str(e)
+            }
 
     def atualizar_item(self, item_id: int, novos_dados: dict, usuario="sistema") -> dict:
         try:
@@ -172,7 +327,7 @@ class EstoqueService:
             tipo=tipo,
             usuario=usuario
         )
-
+        print(f"[EstoqueService] {len(rows)} movimentações encontradas para item_id={item_id}, tipo={tipo}, usuario={usuario}")
         return [
             {
                 "id": r[0],
@@ -185,14 +340,16 @@ class EstoqueService:
                 "data": r[7],
             }
             for r in rows
+               
         ]
+
 
     def listar_historico(self, item_id=None, usuario=None):
         rows = self.hist_repo.listar(
             item_id=item_id,
             usuario=usuario
         )
-
+        print(f"[EstoqueService] {len(rows)} registros de histórico encontrados para item_id={item_id}, usuario={usuario}")
         return [
             {
                 "id": r[0],

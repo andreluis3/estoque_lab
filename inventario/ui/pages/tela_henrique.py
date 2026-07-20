@@ -67,6 +67,7 @@ class PopupAlerta(QDialog):
     def __init__(self, quantidade_alertas, lista_alertas, parent=None):
         super().__init__(parent)
 
+        
         self.parent = parent
         self.lista_alertas = lista_alertas
 
@@ -82,7 +83,9 @@ class PopupAlerta(QDialog):
             border-radius: 15px;
             color: white;
         """)
-
+        print("="*60)
+        print("[TelaHenriquePage] __init__")
+        print("="*60)
         # TEXTO
         self.label = QLabel(
             f"⚠ {quantidade_alertas} itens com estoque baixo",
@@ -642,7 +645,7 @@ class SistemaInventarioV2(QWidget):
         self.animacao.valueChanged.connect(
             lambda: self.atualizar_layout()
         )
-
+        print("[Tela_Henrique] Construindo interface...")
         self.animacao.start()
                                                                                       
     def realizar_busca(self):   # Busca o item nas planilhas

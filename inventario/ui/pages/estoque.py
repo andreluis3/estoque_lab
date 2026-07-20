@@ -12,6 +12,7 @@ class TelaEstoque(QWidget):
 
         # SUA TABELA (widget que você já tem)
         self.tabela = TabelaEstoque()
+        print("[TelaEstoque] TabelaEstoque criada e adicionada à tela.")
 
         self.layout.addWidget(self.tabela)
 

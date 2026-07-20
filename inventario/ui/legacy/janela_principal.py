@@ -100,6 +100,7 @@ class MainWindow(QMainWindow):
                     self.carregar_tabela()
                     return
                 valor = int(valor)
+            print(f"[janela_principal], item clicado: id={item_id}, campo={campo}, valor={valor}")
 
             # Chama a inteligência enterprise do EstoqueService em vez do CRUD direto
             usuario = self.usuario_logado or "sistema"
@@ -125,6 +126,7 @@ class MainWindow(QMainWindow):
         """Abre o dialog para adicionar um novo item passando o orquestrador de serviço."""
         # Passa o estoque_service que está na janela principal direto para o diálogo
         dialogo = DialogoInserir(estoque_service=self.estoque_service)
+        print("[janela_principal] Abrindo diálogo de inserção com EstoqueService injetado.")
         
         # Fazemos um pequeno ajuste dinâmico: injetamos o usuário ativo no diálogo antes de abrir
         # para que o log registre quem realmente salvou o componente no lab
@@ -166,6 +168,7 @@ class MainWindow(QMainWindow):
         msg.setWindowTitle("Erro")
         msg.setText(mensagem)
         msg.exec()
+        print(f"[janela_principal] Erro: {mensagem}")
 
     def _mostrar_sucesso(self, mensagem: str):
         msg = QMessageBox(self)
@@ -173,6 +176,7 @@ class MainWindow(QMainWindow):
         msg.setWindowTitle("Sucesso")
         msg.setText(mensagem)
         msg.exec()
+        print(f"[janela_principal] Sucesso: {mensagem}")
 
     # ── Construção de Telas e Fluxos ───────────────────────────────────────
 
@@ -194,6 +198,7 @@ class MainWindow(QMainWindow):
         self.tabela = TabelaEstoque()
         self.tabela.itemChanged.connect(self.on_item_changed)
         layout.addWidget(self.tabela)
+        print("[janela_principal] TabelaEstoque criada e conectada ao on_item_changed.")
 
         # ── Botões ─────────────────────────────────────────────────────────
         botoes = QHBoxLayout()
@@ -268,6 +273,7 @@ class MainWindow(QMainWindow):
                 self.mostrar_sistema_principal()
             else:
                 self.label_login_status.setText("❌ Usuário ou senha inválidos")
+        print(f"[janela_principal] Tela de login criada. Usuário logado: {self.usuario_logado}")
 
         # Clique do botão
         botao_login.clicked.connect(fazer_login)

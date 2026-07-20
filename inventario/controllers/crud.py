@@ -1,12 +1,10 @@
+#NAO UTILIZAR, NÃO FUNCIONA E NÃO INTERFERE EM NADA
 """
-crud.py — Operações CRUD com auditoria completa.
-
-Toda inserção, atualização e exclusão é registrada em:
-  - movimentacoes: rastreia entradas/saídas de quantidade
-  - historico_alteracoes: rastreia qualquer mudança de campo
+ESSE ARQUIVO NÃO ESTÁ MAIS SENDO USADO, ELE ERA USADO EM UMA VERSÃO ANTIGA, HOJE TODAS AS ETAPAS DE INSERÇÃO É FEITA NO SERVICE.
 """
 
 from inventario.database.db import conectar_db
+from inventario.frontend_henrique.projeto.banco_de_dados.impotar_planilha import dados
 from inventario.services.log_service import registrar_log
 import sqlite3
 
@@ -17,11 +15,24 @@ class Crud:
         self.cursor = self.conn.cursor()
 
     def inserir_item(self, dados, usuario="sistema"):
+        
         try:
+            print("\n==============================")
+            print("DEBUG INSERÇÃO ITEM")
+            print("==============================")
+
+            print("Dados recebidos:")
+            print(dados)
             self.validar_dados_item(dados)
             dados = self.normalizar_dados(dados)
+            print("\nDepois da normalização:")
+            print(dados)
 
             existente = self.item_existe(dados["nome"], dados["modelo"])
+            print("\nVerificando existência:")
+            print("Nome:", dados["nome"])
+            print("Modelo:", dados["modelo"])
+            print("Resultado:", existente)
 
             if existente:
                 # Item já existe: APENAS soma a quantidade (entrada manual)
@@ -32,6 +43,16 @@ class Crud:
                     UPDATE itens SET quantidade=?, atualizado_em=CURRENT_TIMESTAMP
                     WHERE id=?
                 """, (nova_qtd, item_id))
+                print("\nExecutando INSERT...")
+                print(
+                    dados["nome"],
+                    dados["tipo"],
+                    dados["modelo"],
+                    dados["quantidade"],
+                    dados["caixa"],
+                    dados["localizacao"],
+                    dados["slot"]
+                )
 
                 self._registrar_historico(
                     item_id, "quantidade",
@@ -52,6 +73,7 @@ class Crud:
                     dados["caixa"], dados["localizacao"], dados["slot"]
                 ))
                 item_id = self.cursor.lastrowid
+                print("ID criado:", item_id)
 
                 self._registrar_historico(
                     item_id, "*", None,
@@ -65,16 +87,25 @@ class Crud:
 
             registrar_log(usuario, log_acao, detalhe)
             self.conn.commit()
+            print("Commit realizado")
             return {"status": "ok", "acao": acao, "item_id": item_id}
         except sqlite3.IntegrityError as e:
             return {
                 "status": "erro",
                 "mensagem": "Item duplicado detectado."
             }
-
         except Exception as e:
-            return {"status": "erro", "mensagem": str(e)}
 
+            print("==============================")
+            print("ERRO INSERÇÃO")
+            print(type(e))
+            print(e)
+            print("==============================")
+
+            return {
+                "status":"erro",
+                "mensagem":str(e)
+            }
     # ═══════════════════════════════════════════════════════════════════════
     #  LISTAR
     # ═══════════════════════════════════════════════════════════════════════
@@ -381,27 +412,81 @@ class Crud:
     # ═══════════════════════════════════════════════════════════════════════
 
     def item_existe(self, nome, modelo):
-        return self.cursor.execute("""
-            SELECT id, quantidade FROM itens WHERE nome=? AND modelo=?
+
+        print("\n========== DEBUG ITEM EXISTE ==========")
+        print("Procurando:")
+        print("Nome:", nome)
+        print("Modelo:", modelo)
+
+        resultado = self.cursor.execute("""
+            SELECT id, quantidade 
+            FROM itens 
+            WHERE nome=? AND modelo=?
         """, (nome, modelo)).fetchone()
 
+        print("Resultado encontrado:", resultado)
+        print("========================================\n")
+
+        return resultado
+
     def _registrar_movimentacao(self, item_id, tipo, quantidade, usuario):
+
+        print("\n========== DEBUG MOVIMENTAÇÃO ==========")
+        print("Item ID:", item_id)
+        print("Tipo:", tipo)
+        print("Quantidade:", quantidade)
+        print("Usuário:", usuario)
+
+
         self.cursor.execute("""
-            INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
+            INSERT INTO movimentacoes 
+            (item_id, tipo, quantidade, usuario)
             VALUES (?, ?, ?, ?)
         """, (item_id, tipo, quantidade, usuario))
+
+
+        print("✅ Movimentação inserida no banco")
+
+
         registrar_log(
             usuario,
             f"MOVIMENTACAO_{tipo.upper()}",
             f"item_id={item_id} | qtd={quantidade}"
         )
 
+
+        print("========================================\n")
+
     def _registrar_historico(self, item_id, campo, valor_anterior, valor_novo, usuario, acao):
+
+        print("\n========== DEBUG HISTÓRICO ==========")
+
+        print("Item ID:", item_id)
+        print("Campo:", campo)
+        print("Valor anterior:", valor_anterior)
+        print("Valor novo:", valor_novo)
+        print("Usuário:", usuario)
+        print("Ação:", acao)
+
+
         self.cursor.execute("""
             INSERT INTO historico_alteracoes
                 (item_id, campo, valor_anterior, valor_novo, usuario, acao)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (item_id, campo, valor_anterior, valor_novo, usuario, acao))
+        """, (
+            item_id,
+            campo,
+            valor_anterior,
+            valor_novo,
+            usuario,
+            acao
+        ))
+
+
+        print("✅ ITEM ADICIONADO NO HISTÓRICO")
+
+
+        print("=====================================\n")
 
     def validar_dados_item(self, dados):
         obrigatorios = ["nome", "tipo", "modelo", "quantidade", "caixa", "localizacao"]
@@ -459,25 +544,32 @@ class Crud:
             SET quantidade=?, atualizado_em=CURRENT_TIMESTAMP
             WHERE id=?
         """, (nova_qtd, item_id))
-
+        print(f"Atualizando item {item_id}: {qtd_atual} -> {nova_qtd}")
+        
         # movimentação
         cursor.execute("""
             INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
             VALUES (?, 'saida', ?, ?)
         """, (item_id, quantidade, usuario))
+        print(f"Registrando movimentação de saída: {quantidade}x {nome} ({modelo}) por {usuario}")
 
         # histórico detalhado
         descricao = f"{usuario} retirou {quantidade}x {nome} ({modelo}) | Motivo: {motivo}"
+
+        print(f"Registrando histórico para item {item_id}: {qtd_atual} -> {nova_qtd}")
 
         cursor.execute("""
             INSERT INTO historico_alteracoes (item_id, campo, valor_anterior, valor_novo, usuario, acao)
             VALUES (?, 'quantidade', ?, ?, ?, 'retirada')
         """, (item_id, qtd_atual, nova_qtd, usuario))
 
+        print(f"✅ HISTÓRICO ATUALIZADO PARA ITEM {item_id}")
+
         conn.commit()
         conn.close()
 
         # log arquivo
         registrar_log(usuario, "RETIRADA", descricao)
+        print(f"Log registrado: {descricao}")
 
         return {"status": "ok"}

@@ -3,7 +3,7 @@ from PyQt6.QtCore import QPropertyAnimation, QRect, QEasingCurve, Qt
 from inventario.ui.widgets.menu_lateral import MenuLateralWidget
 from inventario.ui.widgets.barra_busca import BarraBuscaWidget
 from inventario.ui.components.logo_widget import LogoWidget
-from inventario.ui.legacy.tabela_estoque import TabelaEstoque
+from inventario.ui.widgets.tabela_estoque_widget import TabelaEstoqueWidget
 from inventario.ui.widgets.popup_alerta import PopupAlertaWidget
 from inventario.ui.dialogs.falta_dialog import DialogFalta
 from inventario.services.estoque_service import EstoqueService
@@ -13,6 +13,12 @@ from inventario.services.estoque_service import EstoqueService
 class TelaHenriquePage(QWidget):
     def __init__(self, estoque_service=None, parent=None):
         super().__init__(parent)
+        
+        print("="*60)
+        print("[DEBUG] Entrou na TelaHenriquePage")
+        print("[DEBUG] estoque_service:", estoque_service)
+        print("[DEBUG] parent:", parent)
+        print("="*60)
         self.estoque_service = estoque_service
         self.menu_aberto = True
         self.largura_menu = 400
@@ -29,9 +35,16 @@ class TelaHenriquePage(QWidget):
         self.setStyleSheet("background-color: black; color: white;")
 
         # 1. Instanciação da Tabela Primeiro (Fica ao fundo do Menu Lateral)
-        self.tabela = TabelaEstoque()
+        # 1. Tabela oficial do sistema
+        self.tabela = TabelaEstoqueWidget(self)
+        print("[TelaHenriquePage] TabelaEstoqueWidget criada.")
+        print(f"[TelaHenriquePage] Dimensões da tela: {self.largura_tela}x{self.altura_tela}")
+
         self.tabela.show()
 
+        print("[TelaHenriquePage] Tabela criada.")
+        self.tabela.show()
+        print("[TelaHenriquePage] Tabela criada.")
         print("Tabela criada")
 
         # 2. Instanciação do Menu Lateral Animado
@@ -55,6 +68,7 @@ class TelaHenriquePage(QWidget):
         """)
         self.botao_menu.clicked.connect(self.animar_menu)
         self.botao_menu.raise_()
+        print("[TelaHenriquePage] Menu criado.")
 
         # 4. Componente de Busca (Centralizado Dinamicamente)
         self.barra_busca = BarraBuscaWidget(self)
@@ -64,16 +78,19 @@ class TelaHenriquePage(QWidget):
         # 5. Componente de Logo (Canto Superior Direito)
         self.logo = LogoWidget(self)
         self.logo.move(self.largura_tela - 175, 15)
+        print("[TelaHenriquePage] Logo criada.")
 
         # Conexões de Sinais dos Componentes aos Métodos Locais / Pontes de Lógica
         self.barra_busca.buscar_clicado.connect(self.realizar_busca)
         self.menu.action_falta.connect(self.abrir_janela_falta)
+        print("[TelaHenriquePage] Conectando sinais...")
 
         # Configura as proporções iniciais geométricas
         self.atualizar_layout()
         print(self.tabela.geometry())
         self.verificar_alertas_sistema()
         self.carregar_dados_tabela_naui()
+        print("[TelaHenriquePage] Interface OK.")
 
     def animar_menu(self):
         self.animacao = QPropertyAnimation(self.menu, b"geometry")
@@ -91,6 +108,7 @@ class TelaHenriquePage(QWidget):
 
         self.animacao.valueChanged.connect(self.atualizar_layout)
         self.animacao.start()
+        print("[TelaHenriquePage] Animação do menu iniciada.")
 
     def atualizar_layout(self):
         margem_esquerda = (self.largura_menu + 50) if self.menu_aberto else 80

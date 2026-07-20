@@ -49,6 +49,7 @@ class TabelaEstoque(QTableWidget):
                 self.setItem(row, col, cell)
 
         self.blockSignals(False)   
+        print(f"[tabela_estoque] {len(itens)} items carregados na tabela com sucesso.")
 
     def adicionar_item(self, dados):
         row = self.rowCount()
@@ -76,3 +77,5 @@ class TabelaEstoque(QTableWidget):
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
             self.setItem(row, col, item)
+        print(f"[tabela_estoque] Item adicionado: {dados['nome']} ({dados['modelo']}) com ID {dados['id']}.")
+        

@@ -38,7 +38,7 @@ class PopupAlertaWidget(QDialog):
                 background-color: #505050;
             }
         """)
-        
+        print("[PopupAlertaWidget] Construindo interface...")
         self.botao.clicked.connect(self.acao_saiba_mais)
         QTimer.singleShot(10000, self.close)
 

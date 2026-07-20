@@ -24,6 +24,7 @@ class MenuLateralWidget(QFrame):
                 border-right: 2px solid #0078ff;
             }
         """)
+        print("[MenuLateral] Construindo interface...")
         
         # Instanciar Botões com exata nomenclatura visual
         self.botao_editar = QPushButton("Editar item", self)
@@ -48,3 +49,12 @@ class MenuLateralWidget(QFrame):
             btn.setIcon(QIcon(str(IMAGES_DIR / icone_nome)))
             btn.setIconSize(QSize(80, 80))
             btn.clicked.connect(sinal.emit)
+            
+        print("[MenuLateral] Menu criado.")
+        print("[MenuLateral] Botões:")
+        print("   Editar")
+        print("   Adicionar")
+        print("   Remover")
+        print("   Histórico")
+        print("   Itens em falta")
+        print("   Itens utilizados")

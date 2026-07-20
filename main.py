@@ -1,4 +1,6 @@
 import sys
+import os
+
 from PyQt6.QtWidgets import QApplication
 
 from inventario.database.db import criar_tabela, conectar_db
@@ -8,29 +10,97 @@ from inventario.ui.legacy.janela_principal import MainWindow
 
 
 def main():
-    print("Iniciando aplicação Estoque Lab...")
 
-    # 1. Banco e backup
-    criar_tabela()
+    print("=" * 60)
+    print("INICIANDO APLICAÇÃO ESTOQUE LAB")
+    print("=" * 60)
+
+
+    # VER LOCAL ATUAL
+    print("\n[DEBUG] Diretório atual:")
+    print(os.getcwd())
+
+
+    # BANCO
+    print("\n[DEBUG] Criando tabela...")
+    
+    try:
+        criar_tabela()
+        print("[OK] Tabela criada/verificada")
+    except Exception as e:
+        print("[ERRO criar_tabela]")
+        print(e)
+
+
+    # BACKUP
+    print("\n[DEBUG] Criando backup...")
 
     try:
         criar_backup()
-        print("-> Backup preventivo inicializado com sucesso.")
+        print("[OK] Backup realizado")
     except Exception as e:
-        print(f"-> Aviso: Não foi possível realizar o backup inicial: {e}")
+        print("[ERRO backup]")
+        print(e)
 
-    # 2. App Qt
+
+
+    # QT
+    print("\n[DEBUG] Inicializando PyQt")
+
     app = QApplication(sys.argv)
 
-    # 3. Banco + service
-    conexao_db = conectar_db()
-    estoque_service = EstoqueService(conn=conexao_db)
 
-    # 4. UI principal (ANTIGA, ESTÁVEL)
-    window = MainWindow(estoque_service=estoque_service)
+
+    # CONEXÃO
+    print("\n[DEBUG] Abrindo conexão banco")
+
+    try:
+
+        conexao_db = conectar_db()
+
+        print("[OK] Banco conectado")
+        print("Objeto conexão:")
+        print(conexao_db)
+
+    except Exception as e:
+
+        print("[ERRO conexão banco]")
+        print(e)
+        return
+
+
+
+    # SERVICE
+    print("\n[DEBUG] Criando EstoqueService")
+
+    estoque_service = EstoqueService(
+        conn=conexao_db
+    )
+
+
+    print("[OK] Service criado")
+
+
+
+    # TELA
+    print("\n[DEBUG] Abrindo janela")
+
+    window = MainWindow(
+        estoque_service=estoque_service
+    )
+
+    print("[OK] Janela criada")
+
     window.show()
 
+
+
+    print("\nAPLICAÇÃO RODANDO")
+    print("=" * 60)
+
+
     sys.exit(app.exec())
+
 
 
 if __name__ == "__main__":
