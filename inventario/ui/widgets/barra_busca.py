@@ -16,7 +16,7 @@ class BarraBuscaWidget(QWidget):
         # Input de texto
         self.input_busca = QLineEdit(self)
         self.input_busca.setGeometry(0, 0, 400, 60)
-        self.input_busca.textChanged.connect(self.emitir_texto_alterado)
+        #self.input_busca.textChanged.connect(self.emitir_texto_alterado)
         self.input_busca.setPlaceholderText("Digite o nome do componente")
         self.input_busca.setStyleSheet("""
             QLineEdit {
