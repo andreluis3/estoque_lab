@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QTableWidget, QHeaderView, QAbstractItemView, QTableWidgetItem
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from inventario.ui.theme.styles import ESTILO_TABELA
 from PyQt6.QtCore import Qt
 from inventario.ui.theme.styles import ESTILO_TABELA
@@ -40,6 +40,8 @@ class TabelaEstoqueWidget(QTableWidget):
         "localizacao",
         "slot",
     ]
+    
+    item_selecionado = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -122,3 +124,20 @@ class TabelaEstoqueWidget(QTableWidget):
         if isinstance(item, dict):
             return [item.get(campo, "") for campo in self.CAMPOS]
         return [getattr(item, campo, "") for campo in self.CAMPOS]
+    
+    def selecionar_item(self):
+
+        linha = self.currentRow()
+
+        if linha < 0:
+            return
+
+        item = {
+            "id": self.item(linha, 0).text(),
+            "nome": self.item(linha, 1).text(),
+            "quantidade": self.item(linha, 4).text()
+        }
+
+        self.item_selecionado.emit(item)
+            
+        

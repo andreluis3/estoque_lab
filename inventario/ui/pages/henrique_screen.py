@@ -84,6 +84,12 @@ class TelaHenriquePage(QWidget):
         self.barra_busca.texto_alterado.connect(
             self.realizar_busca
         )
+        
+        # Conexão do sinal de item selecionado da tabela ao método item_clicado
+        self.tabela.item_selecionado.connect(
+            self.item_clicado
+        )
+        
         self.menu.action_falta.connect(self.abrir_janela_falta)
         print("[TelaHenriquePage] Conectando sinais...")
 
@@ -203,6 +209,14 @@ class TelaHenriquePage(QWidget):
         self.janela_falta = DialogFalta(self.alertas_dados, self)
         self.janela_falta.show()
         
+    def item_clicado(self, item):
+        print("====================")
+        print("ITEM SELECIONADO")
+        print(item)
+        print("====================")
+        
+    
+            
     def carregar_dados_tabela_naui(self):
         print ("Carregando dados na tabela a partir do EstoqueService...")
         if not self.estoque_service:
