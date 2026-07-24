@@ -3,7 +3,7 @@
     # retirar popup de pesquisa
 
     # Converter imagens para padrao da bibliote os - para poder abrir em outras maquinas
-
+#NÃO ESTA FUNCIONANDO ESTA FORA DE USO ESSE MAIN.PY 
 from inventario.services.estoque_service import EstoqueService
 from inventario.services.backup_service import criar_backup
 from inventario.frontend_henrique.projeto.utils import *
@@ -349,7 +349,7 @@ class SistemaInventario(QWidget):
 
         # BOTÃO ITENS UTILIZADOS
         self.botao_itensUsados = QPushButton(
-            "Itens utilizados",
+            "Lista de desejos",
             self.menu
         )
 

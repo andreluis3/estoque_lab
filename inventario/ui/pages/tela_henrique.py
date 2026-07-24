@@ -206,9 +206,10 @@ class SistemaInventarioV2(QWidget):
             font-size: 32px;
             font-weight: bold;
         """)
-
-        # Campo de busca
-        self.input_busca = QLineEdit(self)
+        
+        self.input_busca.textChanged.connect(
+            self.emitir_texto_alterado
+        )
         
         x_campo_de_busca = int (self.largura_tela - 400) // 2
         self.input_busca.setGeometry(
@@ -347,13 +348,13 @@ class SistemaInventarioV2(QWidget):
             estilo_botao
         )
 
-        # BOTÃO ITENS UTILIZADOS
-        self.botao_itensUsados = QPushButton(
-            "Itens utilizados",
+        # BOTÃO ITENS lista desejos
+        self.botao_lista_desejos = QPushButton(
+            "Lista de desejos",
             self.menu
         )
 
-        self.botao_itensUsados.setStyleSheet(
+        self.botao_lista_desejos.setStyleSheet(
             estilo_botao
         )
 
@@ -393,7 +394,7 @@ class SistemaInventarioV2(QWidget):
             55
         )
 
-        self.botao_itensUsados.setGeometry(
+        self.botao_lista_desejos.setGeometry(
             20,
             515,
             340,
@@ -590,7 +591,7 @@ class SistemaInventarioV2(QWidget):
         self.botao_remover.setIcon(QIcon(caminho_removerItem))
         self.botao_historico.setIcon(QIcon(caminho_historico))
         self.botao_falta.setIcon(QIcon(caminho_itensFalta))
-        self.botao_itensUsados.setIcon(QIcon(caminho_itensUtilizados))
+        self.botao_lista_desejos.setIcon(QIcon(caminho_itensUtilizados))
 
         for botao in [
             self.botao_editar,
@@ -598,7 +599,7 @@ class SistemaInventarioV2(QWidget):
             self.botao_remover,
             self.botao_historico,
             self.botao_falta,
-            self.botao_itensUsados
+            self.botao_lista_desejos
         ]:
             botao.setIconSize(QSize(80, 80))
 

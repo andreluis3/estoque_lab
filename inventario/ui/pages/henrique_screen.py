@@ -7,7 +7,7 @@ from inventario.ui.widgets.tabela_estoque_widget import TabelaEstoqueWidget
 from inventario.ui.widgets.popup_alerta import PopupAlertaWidget
 from inventario.ui.dialogs.falta_dialog import DialogFalta
 from inventario.services.estoque_service import EstoqueService
-
+import traceback
 
 
 class TelaHenriquePage(QWidget):
@@ -75,13 +75,15 @@ class TelaHenriquePage(QWidget):
         x_busca = int(self.largura_tela - 400) // 2 - 50
         self.barra_busca.move(x_busca, 50)
 
-        # 5. Componente de Logo (Canto Superior Direito)
+        # 5. Componente de Logo (Canto Supeself.input_busca = QLineEdit(self)rior Direito)
         self.logo = LogoWidget(self)
         self.logo.move(self.largura_tela - 175, 15)
         print("[TelaHenriquePage] Logo criada.")
 
         # Conexões de Sinais dos Componentes aos Métodos Locais / Pontes de Lógica
-        self.barra_busca.buscar_clicado.connect(self.realizar_busca)
+        self.barra_busca.texto_alterado.connect(
+            self.realizar_busca
+        )
         self.menu.action_falta.connect(self.abrir_janela_falta)
         print("[TelaHenriquePage] Conectando sinais...")
 
@@ -119,7 +121,40 @@ class TelaHenriquePage(QWidget):
             self.height() - 250
         )
 
-    def realizar_busca(self):
+
+    def realizar_busca(self, termo):
+        try:
+            
+            termo = termo.strip()
+            print("==============================")
+            print("[BUSCA HENRIQUE em realizar_busca] Termo recebido:", termo)
+            print("Termo:", termo)
+
+            if termo:
+
+                itens = self.estoque_service.buscar_itens(termo)
+
+            else:
+
+                itens = self.estoque_service.listar_todos_itens()
+
+
+            print("Itens encontrados:", len(itens))
+
+
+            self.tabela.carregar_dados(itens)
+
+            print("Tabela atualizada")
+
+
+        except Exception:
+
+            import traceback
+            traceback.print_exc()
+
+#DEF COMENTADA PARA TESTAR O REALIZAR BUSCA ACIMA
+    """def realizar_busca(self):
+        
         try:
             termo = self.input_busca.text().strip()
 
@@ -140,7 +175,16 @@ class TelaHenriquePage(QWidget):
 
         except Exception:
             import traceback
-            traceback.print_exc()
+            traceback.print_exc()"""
+
+    def emitir_texto_alterado(self, texto):
+
+        print("="*50)
+        print("[BarraBusca] Texto digitado:")
+        print(texto)
+        print("="*50)
+
+        self.texto_alterado.emit(texto)
 
     def verificar_alertas_sistema(self):
         # Simulação ou leitura segura de dados vindos do seu Service principal

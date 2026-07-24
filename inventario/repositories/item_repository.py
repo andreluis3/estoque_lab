@@ -53,7 +53,7 @@ class ItemRepository:
             FROM itens ORDER BY nome
         """).fetchall()
 
-    def buscar_por_termo(self, texto: str) -> list[tuple]:
+    def buscar_por_termo(self, texto: str):
 
         texto_like = f"%{texto}%"
         print("[Repository] Executando Query SQL")

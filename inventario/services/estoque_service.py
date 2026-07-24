@@ -320,14 +320,12 @@ class EstoqueService:
         ]
         
         
-    def buscar_itens(self, texto, filtro):
+    def buscar_itens(self, texto):
         print("[EstoqueService] Entrou no service em buscar itens")
         
-        rows = self.item_repo.buscar_por_termo(
-            texto,
-            filtro
-        )
-        print(f"[EstoqueService] {len(rows)} itens encontrados para termo='{texto}' e filtro='{filtro}'")
+        rows = self.item_repo.buscar_por_termo(texto)
+        
+        print(f"[EstoqueService] {len(rows)} itens encontrados para termo='{texto}'")
        
         return [
             {

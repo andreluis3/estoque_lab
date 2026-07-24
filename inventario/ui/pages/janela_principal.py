@@ -66,7 +66,6 @@ class JanelaPrincipal(QMainWindow):
         for page in self.pages.values():
             self.stack.addWidget(page)
 
-
     def navigate(self, name: str):
         page = self.pages.get(name)
         if page:
