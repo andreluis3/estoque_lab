@@ -8,7 +8,7 @@ from inventario.ui.widgets.popup_alerta import PopupAlertaWidget
 from inventario.ui.dialogs.falta_dialog import DialogFalta
 from inventario.services.estoque_service import EstoqueService
 import traceback
-
+from inventario.ui.dialogs.movimentar_item_dialog import MovimentarItemDialog
 
 class TelaHenriquePage(QWidget):
     def __init__(self, estoque_service=None, parent=None):
@@ -215,8 +215,22 @@ class TelaHenriquePage(QWidget):
         print(item)
         print("====================")
         
-    
-            
+    def item_clicado(self,item):
+        self.dialog = MovimentarItemDialog(
+            item,
+            self
+        )
+
+        self.dialog.adicionar_quantidade.connect(
+            self.adicionar_estoque
+        )
+
+        self.dialog.remover_quantidade.connect(
+            self.remover_estoque
+        )
+
+        self.dialog.exec()
+          
     def carregar_dados_tabela_naui(self):
         print ("Carregando dados na tabela a partir do EstoqueService...")
         if not self.estoque_service:
