@@ -21,7 +21,6 @@ class TelaHenriquePage(QWidget):
         print("="*60)
         self.estoque_service = estoque_service
         self.menu_aberto = True
-        self.largura_menu = 400
         self.iniciar_ui()
 
     def iniciar_ui(self):
@@ -49,6 +48,8 @@ class TelaHenriquePage(QWidget):
 
         # 2. Instanciação do Menu Lateral Animado
         self.menu = MenuLateralWidget(self)
+        self.largura_menu = self.menu.LARGURA_ABERTA
+        self.largura_menu_fechado = self.menu.LARGURA_FECHADA
         self.menu.setGeometry(0, 0, self.largura_menu, self.altura_tela)
         self.menu.raise_()
 
@@ -100,26 +101,42 @@ class TelaHenriquePage(QWidget):
         self.carregar_dados_tabela_naui()
         print("[TelaHenriquePage] Interface OK.")
 
+    
     def animar_menu(self):
+        largura_atual = self.menu.width()
+
         self.animacao = QPropertyAnimation(self.menu, b"geometry")
-        self.animacao.setDuration(300)
+        self.animacao.setDuration(280)
         self.animacao.setEasingCurve(QEasingCurve.Type.InOutQuart)
 
         if self.menu_aberto:
-            self.animacao.setStartValue(QRect(0, 0, self.largura_menu, self.altura_tela))
-            self.animacao.setEndValue(QRect(-self.largura_menu, 0, self.largura_menu, self.altura_tela))
+            # Vai recolher: esconde o texto ANTES de animar, pra não vazar
+            self.menu._aplicar_estilo_botoes(expandido=False)
+            self.animacao.setStartValue(QRect(0, 0, largura_atual, self.altura_tela))
+            self.animacao.setEndValue(QRect(0, 0, self.largura_menu_fechado, self.altura_tela))
             self.menu_aberto = False
         else:
-            self.animacao.setStartValue(QRect(-self.largura_menu, 0, self.largura_menu, self.altura_tela))
+            # Vai expandir: só mostra o texto quando a animação terminar
+            self.animacao.setStartValue(QRect(0, 0, largura_atual, self.altura_tela))
             self.animacao.setEndValue(QRect(0, 0, self.largura_menu, self.altura_tela))
+            self.animacao.finished.connect(lambda: self.menu._aplicar_estilo_botoes(expandido=True))
             self.menu_aberto = True
 
-        self.animacao.valueChanged.connect(self.atualizar_layout)
+        self.animacao.valueChanged.connect(self._sincronizar_menu)
         self.animacao.start()
         print("[TelaHenriquePage] Animação do menu iniciada.")
 
-    def atualizar_layout(self):
-        margem_esquerda = (self.largura_menu + 50) if self.menu_aberto else 80
+    def _sincronizar_menu(self, valor: QRect):
+        """Chamado a cada frame da animação: mantém os botões e a tabela
+        acompanhando a largura atual do menu."""
+        largura = valor.width()
+        self.menu._posicionar_botoes(largura)
+        self.atualizar_layout(largura_menu_atual=largura)
+
+    def atualizar_layout(self, largura_menu_atual=None):
+        if largura_menu_atual is None:
+            largura_menu_atual = self.largura_menu if self.menu_aberto else self.largura_menu_fechado
+        margem_esquerda = largura_menu_atual + 50
         self.tabela.setGeometry(
             margem_esquerda,
             150,

@@ -1,4 +1,4 @@
-def carregar_lista_compras(self):
+"""def carregar_lista_compras(self):
 
     self.tree.delete(*self.tree.get_children())
 
@@ -14,7 +14,8 @@ def carregar_lista_compras(self):
                 item[2],  # nome
                 item[3],  # modelo
                 item[5],  # statusdef adicionar_manual(self):
-
+            ))
+        
     adicionar_item(
         item_id=None,
         nome=self.entry_nome.get(),
@@ -29,3 +30,4 @@ def carregar_lista_compras(self):
             )
         )
         
+"""
