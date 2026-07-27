@@ -50,26 +50,41 @@ class EstoqueService:
     def registrar_item(self, dados_crus: dict, usuario="sistema") -> dict:
 
         print("\n")
-        print("="*60)
+        print("=" * 60)
         print("DEBUG SERVICE - REGISTRAR ITEM")
-        print("="*60)
+        print("=" * 60)
 
         print("Dados recebidos pela tela:")
         print(dados_crus)
 
         try:
 
+            # ==================================================
+            # 1 - VALIDAÇÃO
+            # ==================================================
+
             print("\n[1] Validando dados...")
+
             self.validar_dados_item(dados_crus)
 
             print("OK validação")
 
+
+            # ==================================================
+            # 2 - NORMALIZAÇÃO
+            # ==================================================
+
             print("\n[2] Normalizando dados...")
+
             dados = self.normalizar_dados(dados_crus)
 
             print("Dados normalizados:")
             print(dados)
 
+
+            # ==================================================
+            # 3 - REGRAS DE DOMÍNIO
+            # ==================================================
 
             print("\n[3] Aplicando regras ItemRules...")
 
@@ -77,128 +92,109 @@ class EstoqueService:
                 "nome": dados["nome"]
             })
 
+
             print("Sugestão encontrada:")
             print(sugestao)
 
 
-            obrigatorios = ["nome", "modelo", "quantidade"]
+            obrigatorios = [
+                "nome",
+                "modelo",
+                "quantidade"
+            ]
+
 
             for campo in obrigatorios:
+
                 if not dados_crus.get(campo):
+
                     raise ValueError(
                         f"Campo '{campo}' é obrigatório"
                     )
 
 
+            print("\nAplicando sugestões caso necessário...")
+
+
             if not dados_crus.get("caixa") and sugestao.get("caixa"):
+
                 dados["caixa"] = sugestao["caixa"]
 
+
             if not dados_crus.get("localizacao") and sugestao.get("localizacao"):
+
                 dados["localizacao"] = sugestao["localizacao"]
 
+
             if not dados_crus.get("slot") and sugestao.get("slot"):
+
                 dados["slot"] = sugestao["slot"]
 
 
+            print("Dados finais antes da busca:")
+            print(dados)
+
+
+
+            # ==================================================
+            # 4 - BUSCAR ITEM EXISTENTE
+            # ==================================================
+
             print("\n[4] Procurando item existente...")
 
-            existente = self.item_repo.buscar_por_nome_e_modelo(
-                dados["nome"],
-                dados["modelo"]
-            )
+
+            existente = self.buscar_item_existente(dados)
+
 
             print("Resultado busca:")
+
             print(existente)
 
 
 
+            # ==================================================
+            # 5 - DECISÃO DO FLUXO
+            # ==================================================
+
             if existente:
 
-                print("\n[5] ITEM EXISTE - atualizando quantidade")
 
-                item_id, quantidade_atual = existente
-
-                nova_qtd = quantidade_atual + dados["quantidade"]
-
-                print(
-                    f"Quantidade antiga: {quantidade_atual}"
-                )
-                print(
-                    f"Nova quantidade: {nova_qtd}"
-                )
+                print("\n[5] ITEM EXISTE")
+                print("Chamando _somar_quantidade()")
 
 
-                self.item_repo.atualizar_quantidade(
-                    item_id,
-                    nova_qtd
-                )
-
-                print("Quantidade atualizada")
-
-
-                self.hist_repo.registrar(
-                    item_id,
-                    "quantidade",
-                    str(quantidade_atual),
-                    str(nova_qtd),
-                    usuario,
-                    "entrada_manual"
-                )
-
-                print("Histórico registrado")
-
-
-                self.mov_repo.registrar(
-                    item_id,
-                    "entrada",
-                    dados["quantidade"],
+                resultado = self._somar_quantidade(
+                    existente,
+                    dados,
                     usuario
                 )
-
-                print("Movimentação registrada")
-
-
-                acao = "atualizado"
-
 
 
             else:
 
-                print("\n[5] ITEM NOVO - inserindo")
 
-                item_id = self.item_repo.salvar(dados)
-
-                print("ID criado:")
-                print(item_id)
+                print("\n[5] ITEM NÃO EXISTE")
+                print("Chamando _criar_novo_item()")
 
 
-                self.hist_repo.registrar(
-                    item_id,
-                    "*",
-                    None,
-                    f"{dados['nome']} | {dados['modelo']}",
-                    usuario,
-                    "inserido"
-                )
-
-                print("Histórico registrado")
-
-
-                self.mov_repo.registrar(
-                    item_id,
-                    "entrada",
-                    dados["quantidade"],
+                resultado = self._criar_novo_item(
+                    dados,
                     usuario
                 )
 
-                print("Movimentação registrada")
 
 
-                acao = "inserido"
+            print("\nResultado operação:")
+            print(resultado)
 
 
+
+            # ==================================================
+            # 6 - LOG
+            # ==================================================
 
             print("\n[6] Registrando LOG")
+
 
             registrar_log(
                 usuario,
@@ -207,40 +203,53 @@ class EstoqueService:
             )
 
 
+            print("LOG registrado")
+
+
+
+            # ==================================================
+            # 7 - COMMIT
+            # ==================================================
+
             print("\n[7] Commit")
+
 
             self.conn.commit()
 
 
             print("COMMIT OK")
 
-            print("="*60)
+
+            print("=" * 60)
             print("FIM REGISTRO ITEM")
-            print("="*60)
+            print("=" * 60)
 
 
-            return {
-                "status":"ok",
-                "acao":acao,
-                "item_id":item_id
-            }
+
+            return resultado
+
 
 
         except Exception as e:
 
+
             print("\n")
-            print("="*60)
+            print("=" * 60)
             print("ERRO NO SERVICE")
             print(type(e))
             print(e)
-            print("="*60)
+            print("=" * 60)
 
 
             self.conn.rollback()
 
+
             return {
+
                 "status":"erro",
+
                 "mensagem":str(e)
+
             }
 
     def atualizar_item(self, item_id: int, novos_dados: dict, usuario="sistema") -> dict:
@@ -277,6 +286,7 @@ class EstoqueService:
             self.conn.rollback()
             return {"status": "erro", "mensagem": str(e)}
 
+
     def deletar_item(self, item_id: int, usuario="sistema") -> dict:
         try:
             r = self.item_repo.buscar_por_id(item_id)
@@ -291,7 +301,7 @@ class EstoqueService:
             
             registrar_log(usuario, "DELETAR_ITEM", f"{nome} | {modelo} | qtd={quantidade}")
             self.conn.commit()
-            return {"status": "ok", "mensagem": "Item deletedo com sucesso", "item_id": item_id}
+            return {"status": "ok", "mensagem": "Item deletado com sucesso", "item_id": item_id}
         except Exception as e:
             self.conn.rollback()
             return {"status": "erro", "mensagem": str(e)}
@@ -362,7 +372,6 @@ class EstoqueService:
                 "data": r[7],
             }
             for r in rows
-               
         ]
 
 
@@ -387,3 +396,101 @@ class EstoqueService:
             }
             for r in rows
         ]
+        
+    def buscar_item_existente(self, dados: dict):
+
+        row = self.item_repo.buscar_item_existente(dados)
+
+        if not row:
+            return None
+
+        return {
+            "id": row[0],
+            "nome": row[1],
+            "tipo": row[2],
+            "modelo": row[3],
+            "quantidade": row[4],
+            "caixa": row[5],
+            "localizacao": row[6],
+            "slot": row[7]
+        } 
+        
+   
+    def _criar_novo_item(self, dados, usuario="sistema"):
+
+        item_id = self.item_repo.salvar(dados)
+
+
+        self.hist_repo.registrar(
+            item_id,
+            "*",
+            None,
+            f"{dados['nome']} | {dados['modelo']}",
+            usuario,
+            "novo_item"
+        )
+
+
+        self.mov_repo.registrar(
+            item_id,
+            "entrada",
+            dados["quantidade"],
+            usuario
+        )
+
+
+        return {
+            "status": "ok",
+            "acao": "novo_item",
+            "item_id": item_id,
+            "mensagem": "Novo item cadastrado com sucesso."
+        }
+        
+    def _somar_quantidade(self, item, dados):
+
+        quantidade_antiga = item["quantidade"]
+        nova_quantidade = (
+            quantidade_antiga 
+            + dados["quantidade"]
+        )
+
+
+        self.item_repository.atualizar_quantidade(
+            item["id"],
+            nova_quantidade
+        )
+
+
+        self.historico_repository.registrar(
+            f"Quantidade alterada {quantidade_antiga} -> {nova_quantidade}"
+        )
+
+
+        self.movimentacao_repository.registrar(
+            item["id"],
+            dados["quantidade"],
+            "Entrada de estoque"
+        )
+
+
+        return {
+
+            "status":"ok",
+
+            "acao":"estoque_atualizado",
+
+            "item_id":item["id"],
+
+            "quantidade_anterior":
+            quantidade_antiga,
+
+            "quantidade_atual":
+            nova_quantidade,
+
+            "quantidade_adicionada":
+            dados["quantidade"],
+
+            "mensagem":
+            "Quantidade atualizada."
+
+        }

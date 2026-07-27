@@ -99,3 +99,31 @@ class ItemRepository:
         return self.cursor.execute("""
             SELECT DISTINCT nome FROM itens WHERE nome LIKE ? LIMIT 10
         """, (f"%{texto}%",)).fetchall()
+        
+    def buscar_item_existente(self, dados: dict) -> tuple | None:
+        return self.cursor.execute("""
+            SELECT
+                id,
+                nome,
+                tipo,
+                modelo,
+                quantidade,
+                caixa,
+                localizacao,
+                slot
+            FROM itens
+            WHERE nome = ?
+            AND tipo = ?
+            AND modelo = ?
+            AND caixa = ?
+            AND localizacao = ?
+            AND slot = ?
+        """, (
+            dados["nome"],
+            dados["tipo"],
+            dados["modelo"],
+            dados["caixa"],
+            dados["localizacao"],
+            dados["slot"]
+        )).fetchone()
+  

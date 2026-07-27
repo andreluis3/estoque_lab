@@ -47,6 +47,7 @@ class TabelaEstoqueWidget(QTableWidget):
         super().__init__(parent)
         self.configurar_tabela()
         self.aplicar_estilo()
+        self.itemSelectionChanged.connect(self.selecionar_item)
 
     # ------------------------------------------------------------------
     # CONFIGURAÇÃO ESTRUTURAL (colunas, seleção, scroll, cabeçalho)
@@ -126,18 +127,23 @@ class TabelaEstoqueWidget(QTableWidget):
         return [getattr(item, campo, "") for campo in self.CAMPOS]
     
     def selecionar_item(self):
-
         linha = self.currentRow()
-
         if linha < 0:
             return
 
         item = {
-            "id": self.item(linha, 0).text(),
+            "id": int(self.item(linha, 0).text()),
             "nome": self.item(linha, 1).text(),
-            "quantidade": self.item(linha, 4).text()
+            "tipo": self.item(linha, 2).text(),
+            "modelo": self.item(linha, 3).text(),
+            "quantidade": int(self.item(linha, 4).text()),
+            "caixa": self.item(linha, 5).text(),
+            "localizacao": self.item(linha, 6).text(),
+            "slot": self.item(linha, 7).text(),
         }
 
+        print("[TabelaEstoqueWidget] Printando item selecionado:")
+        print(item)
         self.item_selecionado.emit(item)
             
         

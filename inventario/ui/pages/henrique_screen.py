@@ -8,11 +8,18 @@ from inventario.ui.widgets.popup_alerta import PopupAlertaWidget
 from inventario.ui.dialogs.falta_dialog import DialogFalta
 from inventario.services.estoque_service import EstoqueService
 import traceback
+from inventario.ui.dialogs.adicionar_dialog import AdicionarDialog
+from inventario.ui.dialogs.editar_dialog import EditarDialog
+from inventario.ui.dialogs.remover_dialog import RemoverDialog
 from inventario.ui.dialogs.movimentar_item_dialog import MovimentarItemDialog
+from inventario.ui.components.mensagem import Mensagem
+from inventario.ui.dialogs.remover_dialog import RemoverDialog
+
 
 class TelaHenriquePage(QWidget):
     def __init__(self, estoque_service=None, parent=None):
         super().__init__(parent)
+        self.estoque_service = EstoqueService()
         
         print("="*60)
         print("[DEBUG] Entrou na TelaHenriquePage")
@@ -20,8 +27,10 @@ class TelaHenriquePage(QWidget):
         print("[DEBUG] parent:", parent)
         print("="*60)
         self.estoque_service = estoque_service
+        self.item_selecionado = None
         self.menu_aberto = True
         self.iniciar_ui()
+        self.conectar_sinais()
 
     def iniciar_ui(self):
         # Resgata dimensões dinâmicas da tela igual ao original
@@ -88,10 +97,10 @@ class TelaHenriquePage(QWidget):
         
         # Conexão do sinal de item selecionado da tabela ao método item_clicado
         self.tabela.item_selecionado.connect(
-            self.item_clicado
+            self.salvar_item_selecionado
         )
         
-        self.menu.action_falta.connect(self.abrir_janela_falta)
+        self.menu.action_falta.connect(self.abrir_movimentacao)
         print("[TelaHenriquePage] Conectando sinais...")
 
         # Configura as proporções iniciais geométricas
@@ -101,6 +110,8 @@ class TelaHenriquePage(QWidget):
         self.carregar_dados_tabela_naui()
         print("[TelaHenriquePage] Interface OK.")
 
+        #guardando itens selecionados
+        self.item_selecionado = None
     
     def animar_menu(self):
         largura_atual = self.menu.width()
@@ -143,7 +154,6 @@ class TelaHenriquePage(QWidget):
             self.width() - margem_esquerda - 50,
             self.height() - 250
         )
-
 
     def realizar_busca(self, termo):
         try:
@@ -208,6 +218,16 @@ class TelaHenriquePage(QWidget):
         print("="*50)
 
         self.texto_alterado.emit(texto)
+        
+    def editar_item(self, dados):
+
+        print("[EDITAR] em [HenriqueScreen] foi editado o seguinte ->", dados)
+
+        self.estoque_service.editar_item(
+            dados
+        )
+
+        self.carregar_tabela()
 
     def verificar_alertas_sistema(self):
         # Simulação ou leitura segura de dados vindos do seu Service principal
@@ -226,13 +246,168 @@ class TelaHenriquePage(QWidget):
         self.janela_falta = DialogFalta(self.alertas_dados, self)
         self.janela_falta.show()
         
-    def item_clicado(self, item):
+      
+    def salvar_item_selecionado(self, item):
+
+        print("[TelaHenriquePage] Item selecionado:")
+        print(item)
+
+        self.item_selecionado = item  
+        
+    #essa janela que decide se vai abrir a movimentação ou a janela de falta
+    def conectar_sinais(self):
+            # tabela
+    
+            self.menu.action_adicionar.connect(
+                self.abrir_adicionar
+            )
+    
+            self.menu.action_editar.connect(
+                self.abrir_editar
+            )
+            
+            self.menu.action_remover.connect(
+                self.abrir_remover
+            )
+    
+
+    def abrir_adicionar(self):
+        dialog = AdicionarDialog(self)
+        dialog.item_adicionado.connect(
+            self.adicionar_item
+        )
+        dialog.exec()   
+        
+    def adicionar_item(self, dados):
+        print("=" * 60)
+        print("[TelaHenriquePage]")
+        print("Recebido do Dialog:")
+        print(dados)
+        print("=" * 60)
+        resultado = self.estoque_service.registrar_item(dados)
+        print(resultado)
+
+        if resultado["status"] == "ok":
+            self.carregar_dados_tabela_naui()
+            Mensagem.sucesso(
+                self,
+                resultado["mensagem"]
+            )
+
+        else:
+            Mensagem.erro(
+                self,
+                resultado["mensagem"]
+            )
+                
+    def abrir_remover(self):
+        if not self.item_selecionado:
+            Mensagem.erro(
+                self,
+                "Selecione um item para remover."
+            )
+            return
+
+
+        dialog = RemoverDialog(
+            self.item_selecionado,
+            self
+        )
+
+
+        dialog.item_removido.connect(
+            self.remover_item
+        )
+
+
+        dialog.exec()
+        
+    def remover_item(self, item_id):
+
+        print("=" * 60)
+        print("[TelaHenriquePage]")
+        print("Removendo item:")
+        print(item_id)
+        print("=" * 60)
+
+#chama o service para decidir deletar o item e retorna o resultado para a tela, que decide se mostra sucesso ou erro
+        resultado = self.estoque_service.deletar_item(
+            item_id
+        )
+
+
+        print("Resultado:")
+        print(resultado)
+
+
+        if resultado["status"] == "ok":
+
+            self.carregar_dados_tabela_naui()
+
+            Mensagem.sucesso(
+                self,
+                resultado["mensagem"]
+            )
+
+
+        else:
+
+            Mensagem.erro(
+                self,
+                resultado["mensagem"]
+            )
+        
+    def abrir_editar(self):
+
+        if self.item_selecionado is None:
+            print("Nenhum item selecionado para editar")
+            return
+
+
+        dialog = EditarDialog(
+            self.item_selecionado,
+            self
+        )
+
+
+        dialog.item_editado.connect(
+            self.editar_item
+        )
+        dialog.exec()
+        
+    def abrir_movimentacao(self):
+
+        print("ABRIR MOVIMENTAÇÃO")
+
+        if not self.item_selecionado:
+            Mensagem.erro(
+                self,
+                "Selecione um item para movimentar."
+            )
+            return
+
+        if self.item_selecionado is None:
+            print("Nenhum item selecionado")
+            return
+
+        print(self.item_selecionado)
+
+        dialog = MovimentarItemDialog(
+            self.item_selecionado,
+            self
+        )
+
+        dialog.exec()
+        
+    """def item_clicado(self, item):
         print("====================")
         print("ITEM SELECIONADO")
         print(item)
         print("====================")
         
-    def item_clicado(self,item):
+        self.item_clicado(item)"""
+    
+    def item_clicado(self, item):
         self.dialog = MovimentarItemDialog(
             item,
             self
@@ -245,9 +420,24 @@ class TelaHenriquePage(QWidget):
         self.dialog.remover_quantidade.connect(
             self.remover_estoque
         )
-
         self.dialog.exec()
-          
+        
+    def adicionar_quantidade(self, item_id, quantidade):
+        self.estoque_service.adicionar_quantidade(item_id, quantidade)
+        self.carregar_dados_tabela_naui()
+        
+        print(f"[TelaHenriquePage] Adicionou {quantidade} ao item ID {item_id}.")
+        self.carregar_tabela()
+        
+    def remover_quantidade(self, item_id, quantidade):
+        self.estoque_service.remover_quantidade(item_id, quantidade)
+        self.carregar_dados_tabela_naui()
+        
+        print(f"[TelaHenriquePage] Removeu {quantidade} do item ID {item_id}.")
+        self.carregar_tabela()
+        
+    
+        
     def carregar_dados_tabela_naui(self):
         print ("Carregando dados na tabela a partir do EstoqueService...")
         if not self.estoque_service:
