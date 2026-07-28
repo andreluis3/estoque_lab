@@ -126,4 +126,13 @@ class ItemRepository:
             dados["localizacao"],
             dados["slot"]
         )).fetchone()
+        
+    def listar_itens_criticos(self):
+        self.cursor.execute("""
+            SELECT id, nome, tipo, modelo, quantidade, caixa, localizacao, slot
+            FROM itens
+            WHERE quantidade <= 2
+            ORDER BY quantidade ASC, nome ASC
+        """)
+        return self.cursor.fetchall()
   

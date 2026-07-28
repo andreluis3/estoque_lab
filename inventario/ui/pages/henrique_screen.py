@@ -15,7 +15,7 @@ from inventario.ui.dialogs.movimentar_item_dialog import MovimentarItemDialog
 from inventario.ui.components.mensagem import Mensagem
 from inventario.ui.dialogs.remover_dialog import RemoverDialog
 from inventario.ui.dialogs.historico_dialog import HistoricoDialog
-
+from inventario.ui.dialogs.item_falta_dialog import ItensEmFaltaDialog
 
 class TelaHenriquePage(QWidget):
     def __init__(self, estoque_service=None, parent=None):
@@ -101,8 +101,6 @@ class TelaHenriquePage(QWidget):
             self.salvar_item_selecionado
         )
         
-        self.menu.action_falta.connect(self.abrir_movimentacao)
-        print("[TelaHenriquePage] Conectando sinais...")
 
         # Configura as proporções iniciais geométricas
         self.atualizar_layout()
@@ -271,6 +269,9 @@ class TelaHenriquePage(QWidget):
             )
             
             self.menu.action_historico.connect(self.abrir_historico)
+
+            self.menu.action_falta.connect(self.abrir_itens_em_falta)
+    
     
 
     def abrir_adicionar(self):
@@ -383,6 +384,10 @@ class TelaHenriquePage(QWidget):
         dialog.exec()    
         print("[TelaHenriquePage] Histórico exibido com sucesso.")
         
+    def abrir_itens_em_falta(self):
+        dialog = ItensEmFaltaDialog(self.estoque_service, self)
+        dialog.exec()
+        print("[TelaHenriquePage] Abrindo itens em falta com sucesso.")
         
     def abrir_movimentacao(self):
 
