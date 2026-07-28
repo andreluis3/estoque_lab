@@ -14,6 +14,7 @@ from inventario.ui.dialogs.remover_dialog import RemoverDialog
 from inventario.ui.dialogs.movimentar_item_dialog import MovimentarItemDialog
 from inventario.ui.components.mensagem import Mensagem
 from inventario.ui.dialogs.remover_dialog import RemoverDialog
+from inventario.ui.dialogs.historico_dialog import HistoricoDialog
 
 
 class TelaHenriquePage(QWidget):
@@ -257,7 +258,6 @@ class TelaHenriquePage(QWidget):
     #essa janela que decide se vai abrir a movimentação ou a janela de falta
     def conectar_sinais(self):
             # tabela
-    
             self.menu.action_adicionar.connect(
                 self.abrir_adicionar
             )
@@ -269,6 +269,8 @@ class TelaHenriquePage(QWidget):
             self.menu.action_remover.connect(
                 self.abrir_remover
             )
+            
+            self.menu.action_historico.connect(self.abrir_historico)
     
 
     def abrir_adicionar(self):
@@ -374,6 +376,13 @@ class TelaHenriquePage(QWidget):
             self.editar_item
         )
         dialog.exec()
+        
+        
+    def abrir_historico(self):
+        dialog = HistoricoDialog(self.estoque_service, self)
+        dialog.exec()    
+        print("[TelaHenriquePage] Histórico exibido com sucesso.")
+        
         
     def abrir_movimentacao(self):
 

@@ -17,7 +17,7 @@ class MovimentacaoRepository:
         sql = """
             SELECT
                 m.id,
-                i.id,
+                m.item_id,
                 i.nome,
                 i.modelo,
                 m.tipo,
@@ -25,14 +25,14 @@ class MovimentacaoRepository:
                 m.usuario,
                 m.data
             FROM movimentacoes m
-            JOIN itens i ON i.id = m.item_id
+            LEFT JOIN itens i ON i.id = m.item_id
             WHERE 1=1
         """
 
         params = []
 
         if item_id is not None:
-            sql += " AND i.id = ?"
+            sql += " AND m.item_id = ?"
             params.append(item_id)
 
         if tipo is not None:
@@ -46,5 +46,4 @@ class MovimentacaoRepository:
         sql += " ORDER BY m.data DESC"
 
         cursor.execute(sql, params)
-
         return cursor.fetchall()

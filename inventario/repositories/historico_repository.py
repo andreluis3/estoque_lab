@@ -17,7 +17,7 @@ class HistoricoRepository:
         sql = """
             SELECT
                 h.id,
-                i.id,
+                h.item_id,
                 i.nome,
                 i.modelo,
                 h.campo,
@@ -27,14 +27,14 @@ class HistoricoRepository:
                 h.acao,
                 h.data
             FROM historico_alteracoes h
-            JOIN itens i ON i.id = h.item_id
+            LEFT JOIN itens i ON i.id = h.item_id
             WHERE 1=1
         """
 
         params = []
 
         if item_id is not None:
-            sql += " AND i.id = ?"
+            sql += " AND h.item_id = ?"
             params.append(item_id)
 
         if usuario is not None:
@@ -44,5 +44,4 @@ class HistoricoRepository:
         sql += " ORDER BY h.data DESC"
 
         cursor.execute(sql, params)
-
         return cursor.fetchall()

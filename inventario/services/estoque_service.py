@@ -446,6 +446,9 @@ class EstoqueService:
             "mensagem": "Novo item cadastrado com sucesso."
         }
         
+        
+            # deveria ser self.mov_repo
+        
     def _somar_quantidade(self, item, dados):
 
         quantidade_antiga = item["quantidade"]
@@ -455,21 +458,27 @@ class EstoqueService:
         )
 
 
-        self.item_repository.atualizar_quantidade(
+        self.item_repo.atualizar_quantidade(
             item["id"],
             nova_quantidade
         )
 
 
-        self.historico_repository.registrar(
-            f"Quantidade alterada {quantidade_antiga} -> {nova_quantidade}"
+        self.hist_repo.registrar(
+            item["id"],
+            "quantidade",
+            str(quantidade_antiga),
+            str(nova_quantidade),
+            dados.get("usuario", "sistema"),
+            "atualizacao"
         )
 
 
-        self.movimentacao_repository.registrar(
+        self.mov_repo.registrar(
             item["id"],
+            "entrada",
             dados["quantidade"],
-            "Entrada de estoque"
+            dados.get("usuario", "sistema")
         )
 
 
