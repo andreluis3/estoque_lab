@@ -12,6 +12,7 @@ class EstoqueService:
         self.item_repo = ItemRepository(self.conn)
         self.mov_repo = MovimentacaoRepository(self.conn)
         self.hist_repo = HistoricoRepository(self.conn)
+        self.item_repository = ItemRepository(self.conn)
 
     # ── VALIDACAO E NORMALIZAÇÃO DE DOMÍNIO ──────────────────────────────────
     
@@ -448,6 +449,23 @@ class EstoqueService:
         
         
             # deveria ser self.mov_repo
+            
+    def listar_itens_criticos(self) -> list[dict]:
+        rows = self.item_repo.listar_itens_criticos()
+        print(f"[EstoqueService] {len(rows)} itens críticos encontrados (quantidade <= 2)")
+        return [
+            {
+                "id": r[0],
+                "nome": r[1],
+                "tipo": r[2],
+                "modelo": r[3],
+                "quantidade": r[4],
+                "caixa": r[5],
+                "localizacao": r[6],
+                "slot": r[7],
+            }
+            for r in rows
+        ]
         
     def _somar_quantidade(self, item, dados):
 
