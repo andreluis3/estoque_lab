@@ -1,10 +1,11 @@
 from inventario.database.db import conectar_db
 from inventario.regras_dominio.item_rules import ItemRules
+from inventario.repositories.lista_compras_repository import ListaComprasRepository
 from inventario.services.log_service import registrar_log
 from inventario.repositories.item_repository import ItemRepository
 from inventario.repositories.movimentacao_repository import MovimentacaoRepository
 from inventario.repositories.historico_repository import HistoricoRepository
-
+from inventario.repositories.lista_compras_repository import ListaComprasRepository
 class EstoqueService:
     def __init__(self, conn=None):
         # Gerencia a conexão e distribui para os Repositories puros
@@ -13,6 +14,7 @@ class EstoqueService:
         self.mov_repo = MovimentacaoRepository(self.conn)
         self.hist_repo = HistoricoRepository(self.conn)
         self.item_repository = ItemRepository(self.conn)
+        self.lista_repo = ListaComprasRepository(self.conn)
 
     # ── VALIDACAO E NORMALIZAÇÃO DE DOMÍNIO ──────────────────────────────────
     
@@ -521,3 +523,84 @@ class EstoqueService:
             "Quantidade atualizada."
 
         }
+        
+    def listar_lista_compras(self) -> list[dict]:
+        rows = self.lista_repo.listar_itens()
+        return self._mapear_lista_compras(rows)
+
+    def pesquisar_lista_compras(self, termo: str) -> list[dict]:
+        if not termo or not termo.strip():
+            return self.listar_lista_compras()
+        rows = self.lista_repo.pesquisar(termo.strip())
+        return self._mapear_lista_compras(rows)
+
+    def adicionar_lista_compras(self, dados: dict, usuario: str = "sistema") -> dict:
+        try:
+            if not str(dados.get("nome", "")).strip():
+                raise ValueError("Campo 'Nome' é obrigatório.")
+            if int(dados.get("quantidade", 0)) <= 0:
+                raise ValueError("A quantidade deve ser maior que zero.")
+
+            item_id = self.lista_repo.adicionar_item(dados, usuario)
+            self.conn.commit()
+            return {"status": "ok", "mensagem": "Item adicionado à lista de compras.", "item_id": item_id}
+        except Exception as e:
+            self.conn.rollback()
+            return {"status": "erro", "mensagem": str(e)}
+
+    def editar_lista_compras(self, item_id: int, dados: dict) -> dict:
+        try:
+            if not str(dados.get("nome", "")).strip():
+                raise ValueError("Campo 'Nome' é obrigatório.")
+            if int(dados.get("quantidade", 0)) <= 0:
+                raise ValueError("A quantidade deve ser maior que zero.")
+
+            self.lista_repo.editar_item(item_id, dados)
+            self.conn.commit()
+            return {"status": "ok", "mensagem": "Item da lista de compras atualizado."}
+        except Exception as e:
+            self.conn.rollback()
+            return {"status": "erro", "mensagem": str(e)}
+
+    def remover_lista_compras(self, item_id: int) -> dict:
+        try:
+            self.lista_repo.remover_item(item_id)
+            self.conn.commit()
+            return {"status": "ok", "mensagem": "Item removido da lista de compras."}
+        except Exception as e:
+            self.conn.rollback()
+            return {"status": "erro", "mensagem": str(e)}
+
+    def marcar_item_comprado(self, item_id: int) -> dict:
+        try:
+            self.lista_repo.marcar_comprado(item_id)
+            self.conn.commit()
+            return {"status": "ok"}
+        except Exception as e:
+            self.conn.rollback()
+            return {"status": "erro", "mensagem": str(e)}
+
+    def desmarcar_item_comprado(self, item_id: int) -> dict:
+        try:
+            self.lista_repo.desmarcar_comprado(item_id)
+            self.conn.commit()
+            return {"status": "ok"}
+        except Exception as e:
+            self.conn.rollback()
+            return {"status": "erro", "mensagem": str(e)}
+
+    def _mapear_lista_compras(self, rows) -> list[dict]:
+        return [
+            {
+            "id": r[0],
+            "item_id": r[1],
+            "nome": r[2],
+            "modelo": r[3],
+            "quantidade": r[4],
+            "status": r[5],
+            "observacao": r[6],
+            "usuario": r[7],
+            "criado_em": r[8],
+            }
+                        for r in rows
+                    ]

@@ -16,6 +16,8 @@ from inventario.ui.components.mensagem import Mensagem
 from inventario.ui.dialogs.remover_dialog import RemoverDialog
 from inventario.ui.dialogs.historico_dialog import HistoricoDialog
 from inventario.ui.dialogs.item_falta_dialog import ItensEmFaltaDialog
+from inventario.ui.dialogs.lista_compras_dialog import ListaComprasDialog
+
 
 class TelaHenriquePage(QWidget):
     def __init__(self, estoque_service=None, parent=None):
@@ -255,24 +257,13 @@ class TelaHenriquePage(QWidget):
         
     #essa janela que decide se vai abrir a movimentação ou a janela de falta
     def conectar_sinais(self):
-            # tabela
-            self.menu.action_adicionar.connect(
-                self.abrir_adicionar
-            )
-    
-            self.menu.action_editar.connect(
-                self.abrir_editar
-            )
-            
-            self.menu.action_remover.connect(
-                self.abrir_remover
-            )
-            
+            self.menu.action_adicionar.connect(self.abrir_adicionar)
+            self.menu.action_editar.connect(self.abrir_editar)
+            self.menu.action_remover.connect(self.abrir_remover)
             self.menu.action_historico.connect(self.abrir_historico)
-
             self.menu.action_falta.connect(self.abrir_itens_em_falta)
-    
-    
+            self.menu.action_itens_lista_desejos.connect(self.abrir_lista_compras)   
+            print("[TelaHenriquePage] Sinais do menu conectados.")
 
     def abrir_adicionar(self):
         dialog = AdicionarDialog(self)
@@ -280,6 +271,7 @@ class TelaHenriquePage(QWidget):
             self.adicionar_item
         )
         dialog.exec()   
+        print("[TelaHenriquePage] abrindo janela Adicionar.")
         
     def adicionar_item(self, dados):
         print("=" * 60)
@@ -413,13 +405,11 @@ class TelaHenriquePage(QWidget):
 
         dialog.exec()
         
-    """def item_clicado(self, item):
-        print("====================")
-        print("ITEM SELECIONADO")
-        print(item)
-        print("====================")
+    def abrir_lista_compras(self):
+        dialog = ListaComprasDialog(self.estoque_service, self)
+        dialog.exec()
+        print("[TelaHenriquePage] Lista de compras exibida com sucesso.") 
         
-        self.item_clicado(item)"""
     
     def item_clicado(self, item):
         self.dialog = MovimentarItemDialog(

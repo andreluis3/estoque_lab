@@ -74,24 +74,18 @@ def criar_tabela():
       """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS lista_compras (
+    CREATE TABLE IF NOT EXISTS lista_compras (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         item_id INTEGER,
         nome TEXT NOT NULL,
         modelo TEXT,
-        quantidade_atual INTEGER DEFAULT 0,
-
+        quantidade_atual INTEGER DEFAULT 1,
         status TEXT DEFAULT 'PENDENTE',
-
         observacao TEXT,
-        usuario TEXT DEFAULT 'sistema',
-
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-        FOREIGN KEY (item_id) REFERENCES itens(id)
-    );
-        """)
+        usuario TEXT,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
     
     if __name__ == "__main__":
         criar_tabela()
