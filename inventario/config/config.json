@@ -1,0 +1,29 @@
+{
+    "sistema": {
+        "nome": "EstoqueLab",
+        "versao": "1.0"
+    },
+
+    "caminhos": {
+
+        "servidor": "I:\\LGE\\operacao\\Areas\\CEM\\software\\EstoqueLab",
+
+        "exportacao": "planilha_equipamentos",
+
+        "backup": "backup",
+
+        "logs": "logs"
+    },
+
+    "backup": {
+
+        "ativo": true,
+
+        "destinos": [
+            "servidor",
+            "local"
+        ],
+
+        "frequencia": "diario"
+    }
+}
