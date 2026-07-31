@@ -13,6 +13,7 @@ class MenuLateralWidget(QFrame):
     action_historico = pyqtSignal()
     action_falta = pyqtSignal()
     action_itens_lista_desejos = pyqtSignal()
+    action_exportacao = pyqtSignal()
 
     # Constantes visuais do menu
     LARGURA_ABERTA = 310
