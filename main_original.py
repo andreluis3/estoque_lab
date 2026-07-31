@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QApplication
 import sys
 
 from inventario.database.db import criar_tabela, conectar_db
-from inventario.services.backup_service import criar_backup
+from inventario.services.backup_service import BackupService
 from inventario.services.estoque_service import EstoqueService
 from inventario.ui.app import AppUI
 
@@ -20,8 +20,14 @@ def main():
     # Backup
     print("[MAIN] Verificando backup...")
     try:
-        criar_backup()
+        backup_service = BackupService()
+        arquivos = backup_service.criar_backup()
+
         print("[MAIN] Backup criado com sucesso.")
+
+        for arquivo in arquivos:
+            print(f"  -> {arquivo}")
+
     except Exception as e:
         print(f"[ERRO] Backup: {e}")
 
@@ -54,3 +60,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

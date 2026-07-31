@@ -4,7 +4,7 @@ import os
 from PyQt6.QtWidgets import QApplication
 
 from inventario.database.db import criar_tabela, conectar_db
-from inventario.services.backup_service import criar_backup
+from inventario.services.backup_service import BackupService
 from inventario.services.estoque_service import EstoqueService
 from inventario.ui.legacy.janela_principal import MainWindow
 
@@ -36,7 +36,7 @@ def main():
     print("\n[DEBUG] Criando backup...")
 
     try:
-        criar_backup()
+        #criar_backup()
         print("[OK] Backup realizado")
     except Exception as e:
         print("[ERRO backup]")
