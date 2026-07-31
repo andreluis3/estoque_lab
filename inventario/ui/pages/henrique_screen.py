@@ -220,15 +220,17 @@ class TelaHenriquePage(QWidget):
 
         self.texto_alterado.emit(texto)
         
-    def editar_item(self, dados):
-
+    def editar_item(self, dados: dict):
         print("[EDITAR] em [HenriqueScreen] foi editado o seguinte ->", dados)
 
-        self.estoque_service.editar_item(
-            dados
-        )
+        item_id = dados.pop("id")
+        resultado = self.estoque_service.atualizar_item(item_id, dados)
 
-        self.carregar_tabela()
+        if resultado["status"] == "ok":
+            self.carregar_dados_tabela_naui()
+            Mensagem.sucesso(self, resultado["mensagem"])
+        else:
+            Mensagem.erro(self, resultado["mensagem"])
 
     def verificar_alertas_sistema(self):
         # Simulação ou leitura segura de dados vindos do seu Service principal
@@ -263,7 +265,17 @@ class TelaHenriquePage(QWidget):
             self.menu.action_historico.connect(self.abrir_historico)
             self.menu.action_falta.connect(self.abrir_itens_em_falta)
             self.menu.action_itens_lista_desejos.connect(self.abrir_lista_compras)   
+            
+            # Sinais do menu de contexto da tabela (botão direito / duplo clique)
+            self.tabela.editar_solicitado.connect(self._editar_via_tabela)
+            self.tabela.deletar_solicitado.connect(self._deletar_via_tabela)
+            self.tabela.adicionar_solicitado.connect(self.abrir_adicionar)
+            self.tabela.movimentar_solicitado.connect(self._movimentar_via_tabela)
+            self.tabela.historico_solicitado.connect(self.abrir_historico)
+            self.tabela.lista_compras_solicitado.connect(self._adicionar_lista_compras_via_tabela)
             print("[TelaHenriquePage] Sinais do menu conectados.")
+            
+        
 
     def abrir_adicionar(self):
         dialog = AdicionarDialog(self)
@@ -451,3 +463,32 @@ class TelaHenriquePage(QWidget):
         self.tabela.carregar_dados(itens)
         print("Dados carregados na tabela com sucesso.")
         
+        
+    #menu_editar_clique
+    def _editar_via_tabela(self, item: dict):
+        dialog = EditarDialog(item, self)
+        dialog.item_editado.connect(self.editar_item)
+        dialog.exec()
+
+    def _deletar_via_tabela(self, item: dict):
+        dialog = RemoverDialog(item, self)
+        dialog.item_removido.connect(self.remover_item)
+        dialog.exec()
+
+    def _movimentar_via_tabela(self, item: dict):
+        dialog = MovimentarItemDialog(item, self)
+        dialog.exec()
+
+    def _adicionar_lista_compras_via_tabela(self, item: dict):
+        dados = {
+            "nome": item.get("nome", ""),
+            "tipo": item.get("tipo", ""),
+            "modelo": item.get("modelo", ""),
+            "quantidade": 1,
+            "observacao": f"Reposição sugerida a partir do estoque (item ID {item.get('id')})",
+        }
+        resultado = self.estoque_service.adicionar_lista_compras(dados)
+        if resultado["status"] == "ok":
+            Mensagem.sucesso(self, "Item adicionado à lista de compras.")
+        else:
+            Mensagem.erro(self, resultado["mensagem"])

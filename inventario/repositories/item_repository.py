@@ -34,8 +34,43 @@ class ItemRepository:
         ))
 
     def deletar(self, item_id: int):
-        self.cursor.execute("DELETE FROM itens WHERE id=?", (item_id,))
 
+        try:
+
+            # 1 - Apaga histórico
+            self.cursor.execute("""
+                DELETE FROM historico_alteracoes
+                WHERE item_id = ?
+            """, (item_id,))
+
+
+            # 2 - Apaga movimentações
+            self.cursor.execute("""
+                DELETE FROM movimentacoes
+                WHERE item_id = ?
+            """, (item_id,))
+
+
+            # 3 - Apaga o item
+            self.cursor.execute("""
+                DELETE FROM itens
+                WHERE id = ?
+            """, (item_id,))
+
+
+            self.conn.commit()
+            print(f"[ItemRepository] Item {item_id}, e seus registros relacionados foram deletados com sucesso.")
+            return True
+
+
+        except Exception as e:
+
+            self.conn.rollback()
+
+            print("Erro ao deletar:", e)
+
+            return False
+    
     def buscar_por_id(self, item_id: int) -> tuple | None:
         return self.cursor.execute("""
             SELECT nome, tipo, modelo, quantidade, caixa, localizacao, slot

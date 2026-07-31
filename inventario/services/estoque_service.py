@@ -1,6 +1,7 @@
 from inventario.database.db import conectar_db
 from inventario.regras_dominio.item_rules import ItemRules
 from inventario.repositories.lista_compras_repository import ListaComprasRepository
+from inventario.services.Item_checker_service import ItemCheckerService
 from inventario.services.log_service import registrar_log
 from inventario.repositories.item_repository import ItemRepository
 from inventario.repositories.movimentacao_repository import MovimentacaoRepository
@@ -400,23 +401,32 @@ class EstoqueService:
             for r in rows
         ]
         
-    def buscar_item_existente(self, dados: dict):
+    def buscar_item_existente(self, dados):
 
-        row = self.item_repo.buscar_item_existente(dados)
+        candidatos = self.listar_todos()
 
-        if not row:
-            return None
+        for item in candidatos:
 
-        return {
-            "id": row[0],
-            "nome": row[1],
-            "tipo": row[2],
-            "modelo": row[3],
-            "quantidade": row[4],
-            "caixa": row[5],
-            "localizacao": row[6],
-            "slot": row[7]
-        } 
+            item_dict = {
+
+                "id": item[0],
+                "nome": item[1],
+                "tipo": item[2],
+                "modelo": item[3],
+                "quantidade": item[4],
+                "caixa": item[5],
+                "localizacao": item[6],
+                "slot": item[7],
+
+            }
+
+            if ItemCheckerService.comparar_item(
+                item_dict,
+                dados
+            ):
+                return item_dict
+
+        return None 
         
    
     def _criar_novo_item(self, dados, usuario="sistema"):

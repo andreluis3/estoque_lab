@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import QTableWidget, QHeaderView, QAbstractItemView, QTableWidgetItem
+from PyQt6.QtWidgets import QTableWidget, QHeaderView,QMenu, QAbstractItemView, QTableWidgetItem
 from PyQt6.QtCore import Qt, pyqtSignal
 from inventario.ui.theme.styles import ESTILO_TABELA
 from PyQt6.QtCore import Qt
 from inventario.ui.theme.styles import ESTILO_TABELA
-
+from PyQt6.QtGui import QAction
 
 class TabelaEstoqueWidget(QTableWidget):
     """
@@ -28,8 +28,6 @@ class TabelaEstoqueWidget(QTableWidget):
         "SLOT",
     ]
 
-    # Nomes dos atributos/keys esperados em cada item vindo do service.
-    # Se seus objetos/dicts usarem outros nomes, ajuste apenas esta lista.
     CAMPOS = [
         "id",
         "nome",
@@ -42,12 +40,26 @@ class TabelaEstoqueWidget(QTableWidget):
     ]
     
     item_selecionado = pyqtSignal(dict)
+    
+       # Sinais disparados pelo menu de contexto / duplo clique
+    editar_solicitado = pyqtSignal(dict)
+    deletar_solicitado = pyqtSignal(dict)
+    adicionar_solicitado = pyqtSignal()
+    movimentar_solicitado = pyqtSignal(dict)
+    historico_solicitado = pyqtSignal()
+    lista_compras_solicitado = pyqtSignal(dict)
+    
+    
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.configurar_tabela()
         self.aplicar_estilo()
         self.itemSelectionChanged.connect(self.selecionar_item)
+        self.itemDoubleClicked.connect(self._ao_dar_duplo_clique)
+        # Menu de contexto (botão direito)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.abrir_menu_contexto)
 
     # ------------------------------------------------------------------
     # CONFIGURAÇÃO ESTRUTURAL (colunas, seleção, scroll, cabeçalho)
@@ -127,23 +139,107 @@ class TabelaEstoqueWidget(QTableWidget):
         return [getattr(item, campo, "") for campo in self.CAMPOS]
     
     def selecionar_item(self):
-        linha = self.currentRow()
-        if linha < 0:
-            return
+            linha = self.currentRow()
+            if linha < 0:
+                return
 
-        item = {
-            "id": int(self.item(linha, 0).text()),
-            "nome": self.item(linha, 1).text(),
-            "tipo": self.item(linha, 2).text(),
-            "modelo": self.item(linha, 3).text(),
-            "quantidade": int(self.item(linha, 4).text()),
-            "caixa": self.item(linha, 5).text(),
-            "localizacao": self.item(linha, 6).text(),
-            "slot": self.item(linha, 7).text(),
-        }
+            item = self._item_da_linha(linha)
+            if item is None:
+                return
 
-        print("[TabelaEstoqueWidget] Printando item selecionado:")
-        print(item)
-        self.item_selecionado.emit(item)
+            print("[TabelaEstoqueWidget] Item selecionado:")
+            print(item)
+            self.item_selecionado.emit(item)
             
+    def _item_da_linha(self, linha: int) -> dict | None:
+        """Reconstrói o dict completo a partir das células da linha."""
+        id_widget = self.item(linha, 0)
+        if id_widget is None:
+            return None
+
+        try:
+            return {
+                "id": int(id_widget.text()),
+                "nome": self.item(linha, 1).text(),
+                "tipo": self.item(linha, 2).text(),
+                "modelo": self.item(linha, 3).text(),
+                "quantidade": int(self.item(linha, 4).text() or 0),
+                "caixa": self.item(linha, 5).text(),
+                "localizacao": self.item(linha, 6).text(),
+                "slot": self.item(linha, 7).text(),
+            }
+        except (AttributeError, ValueError):
+            return None
+
+    # ------------------------------------------------------------------
+    # MENU DE CONTEXTO (clique com botão direito)
+    # ------------------------------------------------------------------
+    def abrir_menu_contexto(self, posicao):
+        linha = self.rowAt(posicao.y())
+
+        menu = QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #1b1b1b;
+                color: white;
+                border: 1px solid #0078ff;
+                border-radius: 8px;
+                padding: 6px;
+            }
+            QMenu::item {
+                padding: 8px 20px;
+                border-radius: 4px;
+            }
+            QMenu::item:selected {
+                background-color: #0078ff;
+            }
+            QMenu::separator {
+                height: 1px;
+                background: #2a2a2a;
+                margin: 6px 4px;
+            }
+        """)
+
+        # "Adicionar item" sempre disponível, mesmo sem linha clicada
+        acao_adicionar = QAction("➕ Adicionar item", self)
+        acao_adicionar.triggered.connect(self.adicionar_solicitado.emit)
+        menu.addAction(acao_adicionar)
+
+        item = self._item_da_linha(linha) if linha >= 0 else None
+
+        if item is not None:
+            self.selectRow(linha)  # garante que a linha clicada fique selecionada
+
+            menu.addSeparator()
+
+            acao_editar = QAction("✏ Editar", self)
+            acao_editar.triggered.connect(lambda: self.editar_solicitado.emit(item))
+            menu.addAction(acao_editar)
+
+            acao_deletar = QAction("🗑 Deletar item", self)
+            acao_deletar.triggered.connect(lambda: self.deletar_solicitado.emit(item))
+            menu.addAction(acao_deletar)
+
+            acao_movimentar = QAction("🔁 Movimentar item", self)
+            acao_movimentar.triggered.connect(lambda: self.movimentar_solicitado.emit(item))
+            menu.addAction(acao_movimentar)
+
+            menu.addSeparator()
+
+            acao_historico = QAction("📋 Ver histórico", self)
+            acao_historico.triggered.connect(self.historico_solicitado.emit)
+            menu.addAction(acao_historico)
+
+            acao_lista_compras = QAction("🛒 Adicionar à lista de compras", self)
+            acao_lista_compras.triggered.connect(lambda: self.lista_compras_solicitado.emit(item))
+            menu.addAction(acao_lista_compras)
+
+        menu.exec(self.viewport().mapToGlobal(posicao))
+
+
+    def _ao_dar_duplo_clique(self, cell: QTableWidgetItem):
+        item = self._item_da_linha(cell.row())
+        if item is not None:
+            self.editar_solicitado.emit(item)
+                
         
