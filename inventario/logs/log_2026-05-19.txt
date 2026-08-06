@@ -1,0 +1,13 @@
+[2026-05-19 07:44:00] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=320 | qtd=6
+[2026-05-19 07:44:00] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Capacitor De 47 Uf | 47 UF | qtd=6
+[2026-05-19 07:45:21] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Resistor De 47K Ω | 47K Ω | modelo:RESISTOR DE 47K Ω->47K Ω
+[2026-05-19 07:45:40] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Resistor De 47K Ω | 47K Ω | quantidade:6->4
+[2026-05-19 07:45:40] | USER: andre | AÇÃO: MOVIMENTACAO_SAIDA | DETALHE: item_id=319 | qtd=2
+[2026-05-19 11:21:43] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 11:24:38] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 11:27:45] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:31:52] | USER: 190526 | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:37:32] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:40:52] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:41:40] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-19 14:44:05] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema

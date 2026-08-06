@@ -1,0 +1,53 @@
+    # Gerando relatório Word
+    def gerar_relatorio(self):
+
+        documento = Document()
+
+        documento.add_heading(
+            "Relatório de Estoque Baixo",
+            level=1
+        )
+
+        data = datetime.now().strftime(
+            "%d/%m/%Y %H:%M:%S"
+        )
+
+        documento.add_paragraph(
+            f"Data do relatório: {data}"
+        )
+
+        documento.add_paragraph("")
+
+        # ADICIONA TODOS OS ALERTAS
+        for item in self.lista_alertas:
+
+            documento.add_paragraph(
+                item,
+                style='List Bullet'
+            )
+
+        # NOME DO ARQUIVO
+        nome_arquivo = (
+            f"relatorio_estoque_"
+            f"{datetime.now().strftime('%d_%m_%Y_%H_%M')}.docx"
+        )
+
+        # ÁREA DE TRABALHO
+        desktop = os.path.join(
+            os.path.expanduser("~"),
+            "Desktop"
+        )
+
+        caminho_arquivo = os.path.join(
+            desktop,
+            nome_arquivo
+        )
+
+        # SALVA ARQUIVO
+        documento.save(caminho_arquivo)
+
+        QMessageBox.information(
+            self,
+            "Relatório gerado",
+            f"Relatório salvo em:\n\n{caminho_arquivo}"
+        )
