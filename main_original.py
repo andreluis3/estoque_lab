@@ -1,11 +1,13 @@
 from PyQt6.QtWidgets import QApplication
 import sys
-
+from datetime import datetime
 from inventario.database.db import criar_tabela, conectar_db
 from inventario.services.backup_service import BackupService
 from inventario.services.estoque_service import EstoqueService
 from inventario.ui.app import AppUI
 
+print("HORÁRIO PYTHON:", datetime.now())
+print("HORÁRIO UTC:", datetime.utcnow())
 
 def main():
     print("=" * 60)
@@ -57,7 +59,9 @@ def main():
 
     sys.exit(app.exec())
 
+  
 
 if __name__ == "__main__":
     main()
 
+    

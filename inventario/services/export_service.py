@@ -77,11 +77,7 @@ class ExportService:
     # ==============================
 
     def exportar_estoque_excel(self):
-
-
         itens = self.item_repository.listar()
-
-
         pasta = self._obter_pasta_exportacao()
 
 

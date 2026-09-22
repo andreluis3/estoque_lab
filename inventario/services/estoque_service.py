@@ -463,61 +463,35 @@ class EstoqueService:
             }
             for r in rows
         ]
+    
         
-    def _somar_quantidade(self, item, dados):
-
+    def _somar_quantidade(self, item, dados, usuario="sistema"):
         quantidade_antiga = item["quantidade"]
-        nova_quantidade = (
-            quantidade_antiga 
-            + dados["quantidade"]
-        )
 
+        nova_quantidade = (
+            quantidade_antiga + dados["quantidade"]
+        )
 
         self.item_repo.atualizar_quantidade(
             item["id"],
             nova_quantidade
         )
 
-
         self.hist_repo.registrar(
             item["id"],
             "quantidade",
             str(quantidade_antiga),
             str(nova_quantidade),
-            dados.get("usuario", "sistema"),
+            usuario,
             "atualizacao"
         )
-
 
         self.mov_repo.registrar(
             item["id"],
             "entrada",
             dados["quantidade"],
-            dados.get("usuario", "sistema")
+            usuario
         )
-
-
-        return {
-
-            "status":"ok",
-
-            "acao":"estoque_atualizado",
-
-            "item_id":item["id"],
-
-            "quantidade_anterior":
-            quantidade_antiga,
-
-            "quantidade_atual":
-            nova_quantidade,
-
-            "quantidade_adicionada":
-            dados["quantidade"],
-
-            "mensagem":
-            "Quantidade atualizada."
-
-        }
         
     def listar_lista_compras(self) -> list[dict]:
         rows = self.lista_repo.listar_itens()

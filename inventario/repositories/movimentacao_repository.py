@@ -1,15 +1,40 @@
 import sqlite3
+from datetime import datetime
 
 class MovimentacaoRepository:
     def __init__(self, connection: sqlite3.Connection):
         self.conn = connection
         self.cursor = connection.cursor()
 
-    def registrar(self, item_id: int, tipo: str, quantidade: int, usuario: str):
+    def registrar(self, item_id: int,
+    tipo: str,
+    quantidade: int,
+    usuario: str
+):
         self.cursor.execute("""
-            INSERT INTO movimentacoes (item_id, tipo, quantidade, usuario)
-            VALUES (?, ?, ?, ?)
-        """, (item_id, tipo, quantidade, usuario))
+            INSERT INTO movimentacoes (
+                item_id,
+                item_nome,
+                item_modelo,
+                tipo,
+                quantidade,
+                usuario
+            )
+            SELECT
+                id,
+                nome,
+                modelo,
+                ?,
+                ?,
+                ?
+            FROM itens
+            WHERE id = ?
+        """, (
+            tipo,
+            quantidade,
+            usuario,
+            item_id
+        ))
 
     def listar(self, item_id=None, tipo=None, usuario=None):
         cursor = self.conn.cursor()
@@ -18,14 +43,13 @@ class MovimentacaoRepository:
             SELECT
                 m.id,
                 m.item_id,
-                i.nome,
-                i.modelo,
+                m.item_nome,
+                m.item_modelo,
                 m.tipo,
                 m.quantidade,
                 m.usuario,
                 m.data
             FROM movimentacoes m
-            LEFT JOIN itens i ON i.id = m.item_id
             WHERE 1=1
         """
 
@@ -43,7 +67,8 @@ class MovimentacaoRepository:
             sql += " AND m.usuario LIKE ?"
             params.append(f"%{usuario}%")
 
-        sql += " ORDER BY m.data DESC"
+        sql += " ORDER BY m.data DESC, m.id DESC"
 
         cursor.execute(sql, params)
+
         return cursor.fetchall()
