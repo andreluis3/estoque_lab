@@ -1,5 +1,4 @@
 from inventario.database.db import conectar_db
-from inventario.frontend_henrique.projeto.banco_de_dados.impotar_planilha import dados
 from inventario.regras_dominio.item_rules import ItemRules
 from inventario.repositories.lista_compras_repository import ListaComprasRepository
 from inventario.services.Item_checker_service import ItemCheckerService
