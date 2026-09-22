@@ -46,8 +46,10 @@ def criar_tabela():
         quantidade INTEGER,
         usuario TEXT DEFAULT 'sistema',
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (item_id) REFERENCES itens(id)
-    )
+        FOREIGN KEY (item_id)
+            REFERENCES itens(id)
+            ON DELETE SET NULL
+        )
     """)
 
     # Tabela de auditoria — registra QUALQUER mudança de campo
@@ -61,10 +63,10 @@ def criar_tabela():
         usuario TEXT DEFAULT 'sistema',
         acao TEXT NOT NULL,
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (item_id) REFERENCES itens(id)
-    )
-    """)
-    
+        FOREIGN KEY (item_id)
+            REFERENCES itens(id)
+            ON DELETE SET NULL) """)
+        
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
