@@ -1,4 +1,5 @@
 from inventario.database.db import conectar_db
+from inventario.frontend_henrique.projeto.banco_de_dados.impotar_planilha import dados
 from inventario.regras_dominio.item_rules import ItemRules
 from inventario.repositories.lista_compras_repository import ListaComprasRepository
 from inventario.services.Item_checker_service import ItemCheckerService
@@ -402,31 +403,16 @@ class EstoqueService:
         ]
         
     def buscar_item_existente(self, dados):
-
-        candidatos = self.listar_todos()
+        candidatos = self.listar_todos_itens()
 
         for item in candidatos:
-
-            item_dict = {
-
-                "id": item[0],
-                "nome": item[1],
-                "tipo": item[2],
-                "modelo": item[3],
-                "quantidade": item[4],
-                "caixa": item[5],
-                "localizacao": item[6],
-                "slot": item[7],
-
-            }
-
             if ItemCheckerService.comparar_item(
-                item_dict,
+                item,
                 dados
             ):
-                return item_dict
+                return item
 
-        return None 
+        return None
         
    
     def _criar_novo_item(self, dados, usuario="sistema"):
