@@ -6,35 +6,19 @@ class MovimentacaoRepository:
         self.conn = connection
         self.cursor = connection.cursor()
 
-    def registrar(self, item_id: int,
-    tipo: str,
-    quantidade: int,
-    usuario: str
-):
+    def registrar(self, item_id: int, tipo: str, quantidade: int, usuario: str):
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         self.cursor.execute("""
             INSERT INTO movimentacoes (
                 item_id,
-                item_nome,
-                item_modelo,
                 tipo,
                 quantidade,
-                usuario
+                usuario,
+                data
             )
-            SELECT
-                id,
-                nome,
-                modelo,
-                ?,
-                ?,
-                ?
-            FROM itens
-            WHERE id = ?
-        """, (
-            tipo,
-            quantidade,
-            usuario,
-            item_id
-        ))
+            VALUES (?, ?, ?, ?, ?)
+        """, (item_id, tipo, quantidade, usuario, ts))
 
     def listar(self, item_id=None, tipo=None, usuario=None):
         cursor = self.conn.cursor()

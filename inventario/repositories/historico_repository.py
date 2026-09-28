@@ -1,15 +1,17 @@
 import sqlite3
-
+from datetime import datetime
 class HistoricoRepository:
     def __init__(self, connection: sqlite3.Connection):
         self.conn = connection
         self.cursor = connection.cursor()
 
     def registrar(self, item_id: int, campo: str, anterior: str | None, novo: str | None, usuario: str, acao: str):
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.cursor.execute("""
-            INSERT INTO historico_alteracoes (item_id, campo, valor_anterior, valor_novo, usuario, acao)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (item_id, campo, anterior, novo, usuario, acao))
+            INSERT INTO historico_alteracoes
+                (item_id, campo, valor_anterior, valor_novo, usuario, acao, data)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (item_id, campo, anterior, novo, usuario, acao, ts))
 
     def listar(self, item_id=None, usuario=None):
         cursor = self.conn.cursor()
