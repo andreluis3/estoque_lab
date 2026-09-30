@@ -36,10 +36,7 @@ def criar_tabela():
         )
     """)
 
-    cursor.execute("""
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_itens_nome_modelo
-        ON itens (nome, modelo)
-    """)
+
 
     # ==========================================================
     # 2 - Tabela de movimentações
@@ -107,6 +104,10 @@ def criar_tabela():
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (item_id) REFERENCES itens(id)
         )
+    """)
+
+    cursor.execute("""
+        DROP INDEX IF EXISTS idx_itens_nome_modelo
     """)
 
     # ==========================================================

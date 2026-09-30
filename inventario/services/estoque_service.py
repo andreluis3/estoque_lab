@@ -14,7 +14,7 @@ class EstoqueService:
         self.item_repo = ItemRepository(self.conn)
         self.mov_repo = MovimentacaoRepository(self.conn)
         self.hist_repo = HistoricoRepository(self.conn)
-        self.item_repository = ItemRepository(self.conn)
+
         self.lista_repo = ListaComprasRepository(self.conn)
 
     # ── VALIDACAO E NORMALIZAÇÃO DE DOMÍNIO ──────────────────────────────────
@@ -52,54 +52,39 @@ class EstoqueService:
     # ── OPERAÇÕES CORE DE NEGÓCIO (Antigo CRUD) ──────────────────────────────
 
     def registrar_item(self, dados_crus: dict, usuario="sistema") -> dict:
-
         print("\n")
         print("=" * 60)
         print("DEBUG SERVICE - REGISTRAR ITEM")
         print("=" * 60)
-
         print("Dados recebidos pela tela:")
         print(dados_crus)
 
         try:
-
             # ==================================================
             # 1 - VALIDAÇÃO
             # ==================================================
-
             print("\n[1] Validando dados...")
-
             self.validar_dados_item(dados_crus)
-
             print("OK validação")
-
 
             # ==================================================
             # 2 - NORMALIZAÇÃO
             # ==================================================
-
             print("\n[2] Normalizando dados...")
-
             dados = self.normalizar_dados(dados_crus)
-
             print("Dados normalizados:")
             print(dados)
-
 
             # ==================================================
             # 3 - REGRAS DE DOMÍNIO
             # ==================================================
-
             print("\n[3] Aplicando regras ItemRules...")
-
             sugestao = ItemRules.aplicar_regras({
                 "nome": dados["nome"]
             })
 
-
             print("Sugestão encontrada:")
             print(sugestao)
-
 
             obrigatorios = [
                 "nome",
@@ -107,98 +92,65 @@ class EstoqueService:
                 "quantidade"
             ]
 
-
             for campo in obrigatorios:
-
                 if not dados_crus.get(campo):
-
                     raise ValueError(
                         f"Campo '{campo}' é obrigatório"
                     )
 
-
             print("\nAplicando sugestões caso necessário...")
 
-
             if not dados_crus.get("caixa") and sugestao.get("caixa"):
-
                 dados["caixa"] = sugestao["caixa"]
 
-
             if not dados_crus.get("localizacao") and sugestao.get("localizacao"):
-
                 dados["localizacao"] = sugestao["localizacao"]
 
-
             if not dados_crus.get("slot") and sugestao.get("slot"):
-
                 dados["slot"] = sugestao["slot"]
-
 
             print("Dados finais antes da busca:")
             print(dados)
 
-
-
             # ==================================================
-            # 4 - BUSCAR ITEM EXISTENTE
+            # 4 - BUSCAR ITENS COM MESMO NOME E MODELO
             # ==================================================
+            print("\n[4] Procurando itens com mesmo nome e modelo...")
 
-            print("\n[4] Procurando item existente...")
+            candidatos = self.buscar_itens_por_nome_modelo(dados)
 
-
-            existente = self.buscar_item_existente(dados)
-
-
-            print("Resultado busca:")
-
-            print(existente)
-
-
+            print("Candidatos encontrados:")
+            print(candidatos)
 
             # ==================================================
             # 5 - DECISÃO DO FLUXO
             # ==================================================
+            if candidatos:
+                print("\n[5] EXISTEM ITENS COM MESMO NOME E MODELO")
+                print("Aguardando decisão da tela.")
 
-            if existente:
+                return {
+                    "status": "escolha_necessaria",
+                    "mensagem": "Já existem itens com esse nome e modelo.",
+                    "candidatos": candidatos,
+                    "dados": dados
+                }
 
+            print("\n[5] NENHUM ITEM COM MESMO NOME E MODELO")
+            print("Chamando _criar_novo_item()")
 
-                print("\n[5] ITEM EXISTE")
-                print("Chamando _somar_quantidade()")
-
-
-                resultado = self._somar_quantidade(
-                    existente,
-                    dados,
-                    usuario
-                )
-
-
-            else:
-
-
-                print("\n[5] ITEM NÃO EXISTE")
-                print("Chamando _criar_novo_item()")
-
-
-                resultado = self._criar_novo_item(
-                    dados,
-                    usuario
-                )
-
-
+            resultado = self._criar_novo_item(
+                dados,
+                usuario
+            )
 
             print("\nResultado operação:")
             print(resultado)
 
-
-
             # ==================================================
             # 6 - LOG
             # ==================================================
-
             print("\n[6] Registrando LOG")
-
 
             registrar_log(
                 usuario,
@@ -206,37 +158,24 @@ class EstoqueService:
                 f"{dados['nome']} | {dados['modelo']} | qtd={dados['quantidade']}"
             )
 
-
             print("LOG registrado")
-
-
 
             # ==================================================
             # 7 - COMMIT
             # ==================================================
-
             print("\n[7] Commit")
-
 
             self.conn.commit()
 
-
             print("COMMIT OK")
-
 
             print("=" * 60)
             print("FIM REGISTRO ITEM")
             print("=" * 60)
 
-
-
             return resultado
 
-
-
         except Exception as e:
-
-
             print("\n")
             print("=" * 60)
             print("ERRO NO SERVICE")
@@ -244,16 +183,11 @@ class EstoqueService:
             print(e)
             print("=" * 60)
 
-
             self.conn.rollback()
 
-
             return {
-
-                "status":"erro",
-
-                "mensagem":str(e)
-
+                "status": "erro",
+                "mensagem": str(e)
             }
 
     def atualizar_item(self, item_id: int, novos_dados: dict, usuario="sistema") -> dict:
@@ -412,6 +346,30 @@ class EstoqueService:
                 return item
 
         return None
+    
+    def buscar_itens_por_nome_modelo(self, dados: dict) -> list[dict]:
+        """
+        Retorna todos os itens com o mesmo nome e modelo.
+        Não altera o banco de dados.
+        """
+        candidatos = self.item_repo.buscar_todos_por_nome_e_modelo(
+            dados["nome"],
+            dados["modelo"]
+        )
+
+        return [
+            {
+                "id": r[0],
+                "nome": r[1],
+                "tipo": r[2],
+                "modelo": r[3],
+                "quantidade": r[4],
+                "caixa": r[5],
+                "localizacao": r[6],
+                "slot": r[7],
+            }
+            for r in candidatos
+        ]
         
    
     def _criar_novo_item(self, dados, usuario="sistema"):
@@ -446,6 +404,81 @@ class EstoqueService:
         
         
             # deveria ser self.mov_repo
+            
+    def cadastrar_novo_item(self, dados_crus: dict, usuario="sistema") -> dict:
+        """
+        Cadastra um novo registro, mesmo que existam itens
+        com o mesmo nome e modelo em outros locais.
+        """
+        try:
+            self.validar_dados_item(dados_crus)
+            dados = self.normalizar_dados(dados_crus)
+
+            resultado = self._criar_novo_item(dados, usuario)
+
+            registrar_log(
+                usuario,
+                "INSERIR_ITEM",
+                f"{dados['nome']} | {dados['modelo']} | qtd={dados['quantidade']}"
+            )
+
+            self.conn.commit()
+            return resultado
+
+        except Exception as e:
+            self.conn.rollback()
+            return {
+                "status": "erro",
+                "mensagem": str(e)
+            }
+            
+    def adicionar_quantidade_item(self, item_id: int, quantidade: int, usuario="sistema") -> dict:
+        """
+        Adiciona quantidade somente ao ID escolhido pelo usuário.
+        """
+        try:
+            if not isinstance(quantidade, int) or quantidade <= 0:
+                raise ValueError("A quantidade deve ser um inteiro maior que zero.")
+
+            item = self.item_repo.buscar_por_id(item_id)
+
+            if not item:
+                raise ValueError("Item não encontrado.")
+
+            # buscar_por_id retorna:
+            # nome, tipo, modelo, quantidade, caixa, localizacao, slot
+            item_dict = {
+                "id": item_id,
+                "nome": item[0],
+                "tipo": item[1],
+                "modelo": item[2],
+                "quantidade": item[3],
+                "caixa": item[4],
+                "localizacao": item[5],
+                "slot": item[6],
+            }
+
+            resultado = self._somar_quantidade(
+                item_dict,
+                {"quantidade": quantidade},
+                usuario
+            )
+
+            registrar_log(
+                usuario,
+                "ADICIONAR_QUANTIDADE",
+                f"{item_dict['nome']} | {item_dict['modelo']} | ID={item_id} | qtd={quantidade}"
+            )
+
+            self.conn.commit()
+            return resultado
+
+        except Exception as e:
+            self.conn.rollback()
+            return {
+                "status": "erro",
+                "mensagem": str(e)
+            }
             
     def listar_itens_criticos(self) -> list[dict]:
         rows = self.item_repo.listar_itens_criticos()
@@ -492,6 +525,13 @@ class EstoqueService:
             dados["quantidade"],
             usuario
         )
+        
+        return {
+            "status": "ok",
+            "acao": "quantidade_atualizada",
+            "item_id": item["id"],
+            "mensagem": "Quantidade atualizada com sucesso."
+        }
         
     def listar_lista_compras(self) -> list[dict]:
         rows = self.lista_repo.listar_itens()
@@ -573,3 +613,28 @@ class EstoqueService:
             }
                         for r in rows
                     ]
+        
+    def buscar_itens_por_nome_modelo(self, dados):
+        candidatos = self.listar_todos_itens()
+
+        nome_busca = ItemCheckerService.normalizar_texto(
+            dados.get("nome")
+        )
+        modelo_busca = ItemCheckerService.normalizar_texto(
+            dados.get("modelo")
+        )
+
+        encontrados = []
+
+        for item in candidatos:
+            nome_item = ItemCheckerService.normalizar_texto(
+                item.get("nome")
+            )
+            modelo_item = ItemCheckerService.normalizar_texto(
+                item.get("modelo")
+            )
+
+            if nome_item == nome_busca and modelo_item == modelo_busca:
+                encontrados.append(item)
+
+        return encontrados

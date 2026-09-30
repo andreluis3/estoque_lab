@@ -5,20 +5,49 @@ class MovimentacaoRepository:
     def __init__(self, connection: sqlite3.Connection):
         self.conn = connection
         self.cursor = connection.cursor()
-
+        
     def registrar(self, item_id: int, tipo: str, quantidade: int, usuario: str):
+
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        # Recupera os dados atuais do item
+        self.cursor.execute("""
+            SELECT nome, modelo
+            FROM itens
+            WHERE id = ?
+        """, (item_id,))
+
+        item = self.cursor.fetchone()
+
+        if item is None:
+            raise ValueError(
+                f"Não foi possível registrar a movimentação. "
+                f"Item ID {item_id} não encontrado."
+            )
+
+        item_nome, item_modelo = item
+
+        # Registra a movimentação com snapshot
         self.cursor.execute("""
             INSERT INTO movimentacoes (
                 item_id,
+                item_nome,
+                item_modelo,
                 tipo,
                 quantidade,
                 usuario,
                 data
             )
-            VALUES (?, ?, ?, ?, ?)
-        """, (item_id, tipo, quantidade, usuario, ts))
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            item_id,
+            item_nome,
+            item_modelo,
+            tipo,
+            quantidade,
+            usuario,
+            ts
+        ))
 
     def listar(self, item_id=None, tipo=None, usuario=None):
         cursor = self.conn.cursor()

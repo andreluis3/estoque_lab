@@ -139,3 +139,19 @@ class ItemRepository:
         """)
         return self.cursor.fetchall()
   
+    def buscar_todos_por_nome_e_modelo(self, nome: str, modelo: str) -> list[tuple]:
+        return self.cursor.execute("""
+            SELECT
+                id,
+                nome,
+                tipo,
+                modelo,
+                quantidade,
+                caixa,
+                localizacao,
+                slot
+            FROM itens
+            WHERE LOWER(TRIM(nome)) = LOWER(TRIM(?))
+            AND LOWER(TRIM(modelo)) = LOWER(TRIM(?))
+            ORDER BY id
+        """, (nome, modelo)).fetchall()

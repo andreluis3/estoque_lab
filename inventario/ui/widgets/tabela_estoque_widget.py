@@ -5,6 +5,16 @@ from PyQt6.QtCore import Qt
 from inventario.ui.theme.styles import ESTILO_TABELA
 from PyQt6.QtGui import QAction
 
+
+class NumericTableWidgetItem(QTableWidgetItem):
+    """QTableWidgetItem que compara valores numéricos."""
+
+    def __lt__(self, other):
+        try:
+            return int(self.text()) < int(other.text())
+        except (ValueError, TypeError):
+            return super().__lt__(other)
+
 class TabelaEstoqueWidget(QTableWidget):
     """
     Tabela de estoque da Henrique Screen.
@@ -111,20 +121,21 @@ class TabelaEstoqueWidget(QTableWidget):
     # DADOS
     # ------------------------------------------------------------------
     def carregar_dados(self, itens):
-        """
-        itens: lista retornada por estoque_service.listar_todos_itens()
-        Aceita tanto dicts quanto objetos (ORM/dataclass) com os atributos
-        definidos em self.CAMPOS.
-        """
         self.limpar_tabela()
         self.setRowCount(len(itens))
-        self.setSortingEnabled(False)  # evita bug de reordenar durante o preenchimento
+        self.setSortingEnabled(False)
 
         for linha, item in enumerate(itens):
             valores = self._extrair_valores(item)
+
             for coluna, valor in enumerate(valores):
                 texto = "" if valor is None else str(valor)
-                cell = QTableWidgetItem(texto)
+
+                if coluna == 0:  # ID: ordenação numérica
+                    cell = NumericTableWidgetItem(texto)
+                else:
+                    cell = QTableWidgetItem(texto)
+
                 cell.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(linha, coluna, cell)
 

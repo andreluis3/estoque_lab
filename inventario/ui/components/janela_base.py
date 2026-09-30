@@ -15,6 +15,8 @@ class JanelaBase(QWidget):
         # JANELA
         self.resize(1400, 900)
         self.setWindowTitle(titulo)
+        # ÍCONE DA JANELA
+        self.setWindowIcon(QIcon("inventario/assets/logo.ico"))
 
         self.setStyleSheet("""
             QWidget {

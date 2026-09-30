@@ -24,7 +24,7 @@ from PyQt6.QtGui import QColor, QFont, QKeySequence
 
 from inventario.ui.theme.styles import ESTILO_TABELA
 from inventario.ui.theme.dialog_style import ESTILO_DIALOG
-
+    
 
 ESTILO_TABS = """
     QTabWidget::pane {

@@ -6,7 +6,8 @@ from PyQt6.QtWidgets import (
 )
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QPixmap
+from inventario.utils.paths import IMAGES_DIR
 
 class JanelaBase(QWidget):
     def __init__(self, titulo="Título", subtitulo=""):
@@ -15,6 +16,12 @@ class JanelaBase(QWidget):
         # JANELA
         self.resize(1400, 900)
         self.setWindowTitle(titulo)
+        self.caminho_logo = IMAGES_DIR / "logo_software.png"
+
+        # Ícone da janela
+        self.setWindowIcon(
+            QIcon(str(self.caminho_logo))
+        )
 
         self.setStyleSheet("""
             QWidget {

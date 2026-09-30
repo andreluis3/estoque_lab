@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QPushButton, QApplication
 from PyQt6.QtCore import QPropertyAnimation, QRect, QEasingCurve, Qt
+from inventario.ui.dialogs.escolher_item_dialog import EscolherItemDialog
 from inventario.ui.widgets.menu_lateral import MenuLateralWidget
 from inventario.ui.widgets.barra_busca import BarraBuscaWidget
 from inventario.ui.components.logo_widget import LogoWidget
@@ -17,13 +18,27 @@ from inventario.ui.dialogs.remover_dialog import RemoverDialog
 from inventario.ui.dialogs.historico_dialog import HistoricoDialog
 from inventario.ui.dialogs.item_falta_dialog import ItensEmFaltaDialog
 from inventario.ui.dialogs.lista_compras_dialog import ListaComprasDialog
-
+from PyQt6.QtGui import QIcon
+from inventario.utils.paths import IMAGES_DIR
+from PyQt6.QtWidgets import QDialog
 
 class TelaHenriquePage(QWidget):
     def __init__(self, estoque_service=None, parent=None):
         super().__init__(parent)
-        self.estoque_service = EstoqueService()
+        self.setWindowTitle("Sistema de Estoque IPT")
+
+        caminho_logo = IMAGES_DIR / "logo_software.png"
+
+        self.setWindowIcon(
+            QIcon(str(caminho_logo))
+        )
         
+        self.estoque_service = (
+            estoque_service
+            if estoque_service is not None
+            else EstoqueService()
+        )
+                
         print("="*60)
         print("[DEBUG] Entrou na TelaHenriquePage")
         print("[DEBUG] estoque_service:", estoque_service)
@@ -291,22 +306,99 @@ class TelaHenriquePage(QWidget):
         print("Recebido do Dialog:")
         print(dados)
         print("=" * 60)
+
         resultado = self.estoque_service.registrar_item(dados)
+
+        print("Resultado do cadastro:")
         print(resultado)
 
-        if resultado["status"] == "ok":
-            self.carregar_dados_tabela_naui()
-            Mensagem.sucesso(
-                self,
-                resultado["mensagem"]
-            )
-
-        else:
+        # ==================================================
+        # 1 - ERRO NO CADASTRO
+        # ==================================================
+        if resultado["status"] == "erro":
             Mensagem.erro(
                 self,
                 resultado["mensagem"]
             )
-                
+            return
+
+        # ==================================================
+        # 2 - NÃO EXISTEM ITENS COM MESMO NOME E MODELO
+        # ==================================================
+        if resultado["status"] == "ok":
+            self.carregar_dados_tabela_naui()
+
+            Mensagem.sucesso(
+                self,
+                resultado["mensagem"]
+            )
+            return
+
+        # ==================================================
+        # 3 - EXISTEM CANDIDATOS: ABRIR ESCOLHA
+        # ==================================================
+        if resultado["status"] == "escolha_necessaria":
+
+            dialog = EscolherItemDialog(
+                resultado["candidatos"],
+                self
+            )
+
+            resposta = dialog.exec()
+
+            # Usuário cancelou ou fechou a janela
+            if resposta != QDialog.DialogCode.Accepted:
+                print("Cadastro cancelado pelo usuário.")
+                return
+
+            # ==================================================
+            # 4 - ADICIONAR QUANTIDADE AO ID SELECIONADO
+            # ==================================================
+            if dialog.acao == "somar":
+                item = dialog.item_selecionado
+
+                resultado_final = self.estoque_service.adicionar_quantidade_item(
+                    item["id"],
+                    resultado["dados"]
+                )
+
+            # ==================================================
+            # 5 - CADASTRAR UM NOVO ID
+            # ==================================================
+            elif dialog.acao == "novo":
+                resultado_final = self.estoque_service.cadastrar_novo_item(
+                    resultado["dados"]
+                )
+
+            else:
+                return
+
+            print("Resultado da escolha:")
+            print(resultado_final)
+
+            if resultado_final["status"] == "ok":
+                self.carregar_dados_tabela_naui()
+
+                Mensagem.sucesso(
+                    self,
+                    resultado_final["mensagem"]
+                )
+            else:
+                Mensagem.erro(
+                    self,
+                    resultado_final["mensagem"]
+                )
+
+            return
+
+        # ==================================================
+        # 6 - STATUS NÃO TRATADO
+        # ==================================================
+        Mensagem.erro(
+            self,
+            "O sistema retornou uma resposta inesperada ao cadastrar o item."
+        )
+                    
     def abrir_remover(self):
         if not self.item_selecionado:
             Mensagem.erro(
