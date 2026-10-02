@@ -359,7 +359,7 @@ class TelaHenriquePage(QWidget):
 
                 resultado_final = self.estoque_service.adicionar_quantidade_item(
                     item["id"],
-                    resultado["dados"]
+                    resultado["dados"] ["quantidade"]
                 )
 
             # ==================================================

@@ -13,6 +13,7 @@ from PyQt6.QtCore import pyqtSignal
 
 from inventario.ui.theme.dialog_style import ESTILO_DIALOG
 from inventario.ui.components.mensagem import Mensagem
+from inventario.ui.utils.spinbox_utils import configure_quantity_spinbox
 
 
 class AdicionarListaDialog(QDialog):
@@ -51,9 +52,12 @@ class AdicionarListaDialog(QDialog):
         layout.addWidget(self.campo_modelo)
 
         self.campo_quantidade = QSpinBox()
-        self.campo_quantidade.setMinimum(1)
-        self.campo_quantidade.setMaximum(999999)
-        self.campo_quantidade.setValue(1)
+        configure_quantity_spinbox(
+            self.campo_quantidade,
+            minimum=1,
+            maximum=999999,
+            value=1,
+        )
         layout.addWidget(self.campo_quantidade)
 
         self.campo_observacao = QLineEdit()

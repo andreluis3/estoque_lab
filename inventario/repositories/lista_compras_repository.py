@@ -37,8 +37,17 @@ class ListaComprasRepository:
             usuario
         ))
 
-        return self.cursor.lastrowid
-    print("[ListaComprasRepository] Item {nome}, modelo {modelo} e quantidade -> {quantidade} adicionado à lista de compras com sucesso.")
+        item_id = self.cursor.lastrowid
+
+        print(
+            f"[ListaComprasRepository] [SUCESSO] "
+            f"Item salvo na lista de compras | "
+            f"ID={item_id} | "
+            f"Nome={dados.get('nome')} | "
+            f"Modelo={dados.get('modelo') or '—'} | "
+            f"Quantidade={dados.get('quantidade', 1)}"
+        )
+        return item_id
 
     def editar_item(self, item_id: int, dados: dict):
         self.cursor.execute("""
@@ -56,9 +65,25 @@ class ListaComprasRepository:
         print(f"[ListaComprasRepository] Item {item_id} atualizado com sucesso.")
 
     def remover_item(self, item_id: int):
-        self.cursor.execute("DELETE FROM lista_compras WHERE id=?", (item_id,))
-        print(f"[ListaComprasRepository] Item {item_id} removido da lista de compras com sucesso.")
+        try:
+            self.cursor.execute(
+                "DELETE FROM lista_compras WHERE id=?",
+                (item_id,)
+            )
 
+            print(
+                f"[ListaComprasRepository] [SUCESSO] "
+                f"Item removido da lista de compras | ID={item_id}"
+            )
+
+        except Exception as e:
+            print(
+                f"[ListaComprasRepository] [ERRO] "
+                f"Falha ao remover item | ID={item_id} | "
+                f"Tipo={type(e).__name__} | Erro={e}"
+            )
+            raise
+        
     def marcar_comprado(self, item_id: int):
         self.cursor.execute("""
             UPDATE lista_compras
