@@ -1,0 +1,37 @@
+{
+    "sistema": {
+        "nome": "EstoqueLab",
+        "versao": "1.0"
+    },
+
+    "caminhos": {
+
+        "database": "database/estoque.db",
+
+        "backup_projeto": "database/backup",
+
+        "servidor": "I:\\LGE\\operacao\\Areas\\CEM\\software\\EstoqueLab",
+
+        "backup_servidor": "backup",
+
+        "backup_local": "C:\\Users\\andressluis\\Documents\\EstoqueLab\\backup",
+
+        "exportacao": "planilha_equipamentos",
+
+        "logs": "logs"
+    },
+
+
+    "backup": {
+
+        "ativo": true,
+
+        "destinos": [
+            "projeto",
+            "servidor",
+            "local"
+        ],
+
+        "frequencia": "diario"
+    }
+}

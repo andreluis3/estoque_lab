@@ -1,0 +1,237 @@
+# Modelo padrão para todas as janelas segundarias
+
+from PyQt6.QtWidgets import (
+    QWidget,
+    QLabel,
+    QPushButton,
+    QFrame
+)
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
+
+class JanelaPadrao(QWidget):
+    def __init__(
+        self,
+        titulo="Janela",
+        subtitulo="Descrição da janela"
+    ):
+
+        super().__init__()
+
+        self.setWindowTitle(titulo)
+        self.resize(1200, 700)
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #050505;
+                color: white;
+                font-family: Segoe UI;
+            }
+        """)
+
+        # FRAME PRINCIPAL
+        self.frame = QFrame(self)
+        self.frame.setGeometry(
+            20,
+            20,
+            1160,
+            660
+        )
+
+        self.frame.setStyleSheet("""
+            QFrame {
+                background-color: #0f0f0f;
+                border: 2px solid #0078ff;
+                border-radius: 20px;
+            }
+        """)
+
+        # CABEÇALHO
+        self.header = QFrame(self.frame)
+        self.header.setGeometry(
+            0,
+            0,
+            1160,
+            120
+        )
+
+        self.header.setStyleSheet("""
+            QFrame {
+                border-bottom: 1px solid #0078ff;
+                background-color: transparent;
+            }
+        """)
+
+        # ÍCONE
+        self.icone = QLabel("📦", self.header)
+        self.icone.setGeometry(
+            30,
+            25,
+            60,
+            60
+        )
+
+        self.icone.setStyleSheet("""
+            font-size: 40px;
+            border: none;
+        """)
+
+        # TÍTULO
+        self.label_titulo = QLabel(
+            titulo,
+            self.header
+        )
+
+        self.label_titulo.setGeometry(
+            110,
+            20,
+            500,
+            40
+        )
+
+        self.label_titulo.setStyleSheet("""
+            font-size: 30px;
+            font-weight: bold;
+            color: white;
+            border: none;
+        """)
+
+        # SUBTÍTULO
+        self.label_subtitulo = QLabel(
+            subtitulo,
+            self.header
+        )
+
+        self.label_subtitulo.setGeometry(
+            110,
+            60,
+            600,
+            30
+        )
+
+        self.label_subtitulo.setStyleSheet("""
+            font-size: 16px;
+            color: #aaaaaa;
+            border: none;
+        """)
+
+        # BOTÃO FECHAR
+        self.botao_fechar = QPushButton(
+            "✕",
+            self.header
+        )
+
+        self.botao_fechar.setGeometry(
+            1070,
+            25,
+            55,
+            55
+        )
+
+        self.botao_fechar.setStyleSheet("""
+            QPushButton {
+                background-color: #1e1e1e;
+                color: white;
+                border-radius: 15px;
+                font-size: 22px;
+                font-weight: bold;
+            }
+
+            QPushButton:hover {
+                background-color: #ff3b3b;
+            }
+        """)
+
+        self.botao_fechar.clicked.connect(
+            self.close
+        )
+
+        # ÁREA DE CONTEÚDO
+        self.area_conteudo = QFrame(self.frame)
+        self.area_conteudo.setGeometry(
+            30,
+            140,
+            1100,
+            430
+        )
+
+        self.area_conteudo.setStyleSheet("""
+            QFrame {
+                background-color: #161616;
+                border-radius: 18px;
+                border: 1px solid #2d2d2d;
+            }
+        """)
+
+        # RODAPÉ
+        self.footer = QFrame(self.frame)
+        self.footer.setGeometry(
+            0,
+            590,
+            1160,
+            70
+        )
+
+        self.footer.setStyleSheet("""
+            QFrame {
+                border-top: 1px solid #0078ff;
+                background-color: transparent;
+            }
+        """)
+
+        # BOTÃO CANCELAR
+        self.botao_cancelar = QPushButton(
+            "Cancelar",
+            self.footer
+        )
+
+        self.botao_cancelar.setGeometry(
+            760,
+            10,
+            160,
+            45
+        )
+
+        self.botao_cancelar.setStyleSheet("""
+            QPushButton {
+                background-color: #2a2a2a;
+                color: white;
+                border-radius: 14px;
+                font-size: 18px;
+            }
+
+            QPushButton:hover {
+                background-color: #3a3a3a;
+            }
+        """)
+
+        self.botao_cancelar.clicked.connect(
+            self.close
+        )
+
+        # BOTÃO SALVAR
+        self.botao_salvar = QPushButton(
+            "Salvar",
+            self.footer
+        )
+
+        self.botao_salvar.setGeometry(
+            940,
+            10,
+            160,
+            45
+        )
+
+        self.botao_salvar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078ff;
+                color: white;
+                border-radius: 14px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+            QPushButton:hover {
+                background-color: #3399ff;
+            }
+        """)

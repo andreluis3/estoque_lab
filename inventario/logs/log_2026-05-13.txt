@@ -1,0 +1,77 @@
+[2026-05-13 09:11:33] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-13 09:12:30] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=269 | qtd=2
+[2026-05-13 09:12:30] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Reto Macho X Macho | CONECTOR N RETO MACHO X MACHO | qtd=2
+[2026-05-13 09:31:55] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=270 | qtd=2
+[2026-05-13 09:31:55] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector T N X Nf X Nm | CONECTOR T N X NF X NM | qtd=2
+[2026-05-13 09:32:37] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector Bnc Com Carga De 50 Ω | CONECTOR BNC COM CARGA DE 50 Ω | quantidade:0->2
+[2026-05-13 09:32:37] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=263 | qtd=2
+[2026-05-13 09:33:23] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=271 | qtd=2
+[2026-05-13 09:33:23] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Sma Macho X Macho Reto | SMA MACHO X MACHO RETO | qtd=2
+[2026-05-13 09:39:05] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=272 | qtd=2
+[2026-05-13 09:39:05] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Sma 90º Fêmea X Fêmea | SMA 90º FÊMEA X FÊMEA | qtd=2
+[2026-05-13 09:39:48] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=273 | qtd=0
+[2026-05-13 09:39:48] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Macho X Fêmea | BNC MACHO X FÊMEA | qtd=0
+[2026-05-13 09:40:25] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conecotr Bnc Fêmea Para 90º Graus X Sma M | CONECTOR BNC FÊMEA PARA 90º GRAUS X SMA M | modelo:CONECOTR BNC FÊMEA PARA 90º GRAUS X SMA M->CONECTOR BNC FÊMEA PARA 90º GRAUS X SMA M
+[2026-05-13 09:41:10] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=274 | qtd=2
+[2026-05-13 09:41:10] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Sma Macho X Fêmea | CONECTOR SMA MACHO X FÊMEA | qtd=2
+[2026-05-13 09:44:53] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=275 | qtd=2
+[2026-05-13 09:44:53] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Fêmea X N Macho | BNC FÊMEA X N MACHO | qtd=2
+[2026-05-13 09:46:03] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=276 | qtd=2
+[2026-05-13 09:46:03] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho X Sma Macho | N MACHO X SMA MACHO | qtd=2
+[2026-05-13 09:46:55] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=277 | qtd=2
+[2026-05-13 09:46:55] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc 90º Macho X Fêmea | BNC 90º MACHO X FÊMEA | qtd=2
+[2026-05-13 09:48:51] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=278 | qtd=2
+[2026-05-13 09:48:51] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho X Bnc Macho | N MACHO X BNC MACHO | qtd=2
+[2026-05-13 09:49:20] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector Bnc Macho X Fêmea | BNC MACHO X FÊMEA | quantidade:0->2
+[2026-05-13 09:49:20] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=273 | qtd=2
+[2026-05-13 09:49:24] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector Kre X Bnc Macho | CONECTOR KRE X BNC MACHO | slot:SLOT A->SLOT GERAL
+[2026-05-13 09:49:59] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=279 | qtd=2
+[2026-05-13 09:49:59] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho X Sma Fêmea | N MACHO X SMA FÊMEA | qtd=2
+[2026-05-13 09:51:12] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-13 09:53:24] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=280 | qtd=2
+[2026-05-13 09:53:24] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho X Sma Fêmea 90º | CONECTOR N MACHO X SMA FÊMEA 90º | qtd=2
+[2026-05-13 09:55:47] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=281 | qtd=2
+[2026-05-13 09:55:47] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho X Sma F Reverso 90º | N MACHO X SMA F REVERSO 90º | qtd=2
+[2026-05-13 09:56:29] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=282 | qtd=2
+[2026-05-13 09:56:29] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho X Macho 90º | N MACHO X MACHO 90º | qtd=2
+[2026-05-13 09:57:41] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=283 | qtd=2
+[2026-05-13 09:57:41] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho Reverso X Sma Reverso 90º | N MACHO REVERSO X SMA REVERSO 90º | qtd=2
+[2026-05-13 09:59:27] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=284 | qtd=2
+[2026-05-13 09:59:27] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Sma Fêmea Reverso X N Macho | SMA FÊMEA REVERSO X N MACHO | qtd=2
+[2026-05-13 10:01:04] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=285 | qtd=2
+[2026-05-13 10:01:04] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Tnc Macho X N Fêmea | TNC MACHO X N FÊMEA | qtd=2
+[2026-05-13 10:01:41] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=286 | qtd=2
+[2026-05-13 10:01:41] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho X Sma Macho 90º | N MACHO X SMA MACHO 90 | qtd=2
+[2026-05-13 10:02:49] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=287 | qtd=2
+[2026-05-13 10:02:49] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Banana X Bnc Macho X Fêmea | BANANA X BNC MACHO X FÊMEA | qtd=2
+[2026-05-13 10:03:37] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=288 | qtd=2
+[2026-05-13 10:03:37] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector N Macho Pino Banana X N Fêmea | N MACHO PINO BANANA X N FÊMEA | qtd=2
+[2026-05-13 10:04:15] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=289 | qtd=2
+[2026-05-13 10:04:15] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc X Jacaré | BNC X JACARÉ | qtd=2
+[2026-05-13 10:20:40] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=290 | qtd=3
+[2026-05-13 10:20:40] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Adaptador De Tomada | PADRÃO NOVO PARA O PADRÃO ANTIGO | qtd=3
+[2026-05-13 11:03:28] | USER: andre | AÇÃO: LOGIN | DETALHE: Usuário entrou no sistema
+[2026-05-13 13:16:54] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector Bnc X Jacaré | BNC X JACARÉ | quantidade:2->1
+[2026-05-13 13:16:54] | USER: andre | AÇÃO: MOVIMENTACAO_SAIDA | DETALHE: item_id=289 | qtd=1
+[2026-05-13 13:17:03] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector N Macho Pino Banana X N Fêmea | N MACHO PINO BANANA X N FÊMEA | quantidade:2->1
+[2026-05-13 13:17:03] | USER: andre | AÇÃO: MOVIMENTACAO_SAIDA | DETALHE: item_id=288 | qtd=1
+[2026-05-13 13:18:01] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=291 | qtd=3
+[2026-05-13 13:18:01] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Fêmea X Sma M 90º | BNC FÊMEA X SMA M 90º | qtd=3
+[2026-05-13 13:18:31] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector Bnc Fêmea X Sma M 90º | BNC FÊMEA X SMA M 90º | caixa:Maleta Preta->Caixa de conectores de RF transparente
+[2026-05-13 13:18:42] | USER: andre | AÇÃO: EDITAR_ITEM | DETALHE: Conector Bnc Fêmea X Sma M 90º | BNC FÊMEA X SMA M 90º | localizacao:Mesa Branca->Armário
+[2026-05-13 13:19:31] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=292 | qtd=5
+[2026-05-13 13:19:31] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Carga Bnc | CARGA BNC | qtd=5
+[2026-05-13 13:27:22] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=293 | qtd=6
+[2026-05-13 13:27:22] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector De Rf Bnc Macho X N Macho | BNC MACHO X N MACHO | qtd=6
+[2026-05-13 13:29:40] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=294 | qtd=3
+[2026-05-13 13:29:40] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conectores De Rf Sma Macho X N Fêmea | SMA MACHO X N FÊMEA | qtd=3
+[2026-05-13 13:34:24] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=295 | qtd=3
+[2026-05-13 13:34:24] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Fêmea X N Fêmea | BNC FÊMEA X N FÊMEA | qtd=3
+[2026-05-13 13:36:08] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=296 | qtd=5
+[2026-05-13 13:36:08] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Carga N 50 Ohns | CARGA N 50 OHNS | qtd=5
+[2026-05-13 13:40:19] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=297 | qtd=4
+[2026-05-13 13:40:19] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Fêmea X Fêmea | BNC FÊMEA X FÊMEA | qtd=4
+[2026-05-13 13:44:08] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=298 | qtd=5
+[2026-05-13 13:44:08] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Fxfxf T | BNC FXFXF T | qtd=5
+[2026-05-13 13:46:15] | USER: andre | AÇÃO: MOVIMENTACAO_ENTRADA | DETALHE: item_id=299 | qtd=8
+[2026-05-13 13:46:15] | USER: andre | AÇÃO: INSERIR_ITEM | DETALHE: Conector Bnc Macho X Fêmea X Fêmea | BNC MACHO X FÊMEA X FÊMEA | qtd=8
