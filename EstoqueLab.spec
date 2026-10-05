@@ -1,11 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['main_original.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        # Todos os assets da interface
+        ('inventario/ui/assets/*', 'inventario/ui/assets'),
+
+        # Banco
+        ('inventario/database/estoque.db', 'inventario/database'),
+
+        # Configuração
+        ('inventario/config/config.json', 'inventario/config'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -14,6 +22,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -32,7 +41,11 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+
+    # Ícone do arquivo EXE
+    icon='inventario/ui/assets/logo.ico',
 )
+
 coll = COLLECT(
     exe,
     a.binaries,
@@ -40,5 +53,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='EstoqueLab',
+    name='EstoqueLab 1.0',
 )
